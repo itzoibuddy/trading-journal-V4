@@ -5,14 +5,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// For development, use SQLite
-// For production, use PostgreSQL or MySQL
+// Use PostgreSQL for production (Vercel)
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-  // To use PostgreSQL in production, comment out the above and uncomment below:
-  // provider = "postgresql"
-  // url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // For local development with SQLite, comment out the above and uncomment below:
+  // provider = "sqlite"
+  // url      = "file:./dev.db"
 }
 
 model Trade {
