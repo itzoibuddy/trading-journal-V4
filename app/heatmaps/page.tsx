@@ -98,9 +98,11 @@ export default function HeatmapsPage() {
       const dayIndex = getDay(date);
       
       dayStats[dayIndex].trades += 1;
-      dayStats[dayIndex].profitLoss += trade.profitLoss;
+      // Fix: Handle null/undefined profitLoss
+      dayStats[dayIndex].profitLoss += (trade.profitLoss ?? 0);
       
-      if (trade.profitLoss > 0) {
+      // Fix: Check if profitLoss exists and is greater than 0
+      if ((trade.profitLoss ?? 0) > 0) {
         dayStats[dayIndex].winRate += 1;
       }
     });
@@ -128,9 +130,11 @@ export default function HeatmapsPage() {
       }
       
       sectors[sector].trades += 1;
-      sectors[sector].profitLoss += trade.profitLoss;
+      // Fix: Handle null/undefined profitLoss
+      sectors[sector].profitLoss += (trade.profitLoss ?? 0);
       
-      if (trade.profitLoss > 0) {
+      // Fix: Check if profitLoss exists and is greater than 0
+      if ((trade.profitLoss ?? 0) > 0) {
         sectors[sector].winRate += 1;
       }
     });
@@ -170,7 +174,8 @@ export default function HeatmapsPage() {
     }));
 
     filteredTrades.forEach(trade => {
-      const tradeSize = (trade.size || trade.quantity) * trade.entryPrice;
+      // Fix: Use only quantity property, not size
+      const tradeSize = trade.quantity * trade.entryPrice;
       
       const bucketIndex = sizeBuckets.findIndex(
         bucket => tradeSize >= bucket.min && tradeSize < bucket.max
@@ -178,14 +183,17 @@ export default function HeatmapsPage() {
       
       if (bucketIndex !== -1) {
         sizeStats[bucketIndex].trades += 1;
-        sizeStats[bucketIndex].profitLoss += trade.profitLoss;
+        // Fix: Handle null/undefined profitLoss
+        sizeStats[bucketIndex].profitLoss += (trade.profitLoss ?? 0);
         
-        if (trade.profitLoss > 0) {
+        // Fix: Check if profitLoss exists and is greater than 0
+        if ((trade.profitLoss ?? 0) > 0) {
           sizeStats[bucketIndex].winRate += 1;
         }
 
-        // Calculate return percentage
-        sizeStats[bucketIndex].returnPercentage += (trade.profitLoss / tradeSize) * 100;
+        // Calculate return percentage - handle potential null/undefined
+        const profitLoss = trade.profitLoss ?? 0;
+        sizeStats[bucketIndex].returnPercentage += (profitLoss / tradeSize) * 100;
       }
     });
 
