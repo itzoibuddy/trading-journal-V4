@@ -93,6 +93,11 @@ export default function Home() {
         const response = await fetch(`/api/trades`);
         
         if (!response.ok) {
+          if (response.status === 404) {
+            // API route not found, show welcome message instead
+            setIsLoading(false);
+            return;
+          }
           throw new Error('Failed to fetch trades');
         }
         
@@ -153,6 +158,7 @@ export default function Home() {
         
         setError(null);
       } catch (err) {
+        console.error('Error fetching trades:', err);
         setError('Failed to load dashboard data. Please try again.');
       } finally {
         setIsLoading(false);
@@ -161,6 +167,19 @@ export default function Home() {
     
     fetchDashboardData();
   }, []);
+
+  // Welcome message when no trades exist yet
+  const renderWelcomeMessage = () => (
+    <div className="text-center py-12 space-y-6">
+      <h1 className="text-3xl font-bold text-gray-800">Welcome to Your Trading Journal!</h1>
+      <p className="text-xl text-gray-600">Start tracking your trades to see your performance metrics here.</p>
+      <div className="flex justify-center">
+        <a href="/trades" className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+          Add Your First Trade
+        </a>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -181,6 +200,8 @@ export default function Home() {
       
       {isLoading ? (
         <div className="text-center py-12">Loading dashboard data...</div>
+      ) : stats.totalTrades === 0 ? (
+        renderWelcomeMessage()
       ) : (
         <>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
