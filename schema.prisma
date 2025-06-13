@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Use PostgreSQL for production (Vercel)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // For local development with SQLite, comment out the above and uncomment below:
+  // provider = "sqlite"
+  // url      = "file:./dev.db"
+}
+
+model Trade {
+  id              Int      @id @default(autoincrement())
+  symbol          String
+  type            String   // "LONG" or "SHORT"
+  instrumentType  String   @default("STOCK") // "STOCK", "FUTURES", "OPTIONS"
+  entryPrice      Float
+  exitPrice       Float?
+  quantity        Float
+  strikePrice     Float?   // For options
+  expiryDate      DateTime? // For futures and options
+  optionType      String?  // "CALL" or "PUT" for options
+  premium         Float?   // For options
+  entryDate       DateTime
+  exitDate        DateTime?
+  profitLoss      Float?
+  notes           String?
+  sector          String?
+  
+  // New fields for enhanced features
+  strategy        String?  // Strategy name/tag
+  setupImageUrl   String?  // URL to trade setup screenshot
+  preTradeEmotion String?  // Emotional state before trade
+  postTradeEmotion String? // Emotional state after trade
+  tradeConfidence Int?     // Confidence level (1-10)
+  tradeRating     Int?     // Self-rating of trade execution (1-10)
+  lessons         String?  // Lessons learned from the trade
+  riskRewardRatio Float?   // Planned risk-reward ratio
+  stopLoss        Float?   // Initial stop loss price
+  targetPrice     Float?   // Initial target price
+  timeFrame       String?  // Time frame used for analysis (e.g., "5m", "1h", "Daily")
+  marketCondition String?  // Overall market condition (e.g., "Bullish", "Bearish", "Sideways")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+} 
