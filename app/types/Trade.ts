@@ -34,4 +34,41 @@ export interface Trade {
   updatedAt?: string | Date;
 }
 
-export type TradeFormData = Trade; 
+export type TradeFormData = Trade;
+
+// API-compatible version with string dates for server communication
+export interface ApiTrade {
+  id?: number;
+  symbol: string;
+  type: 'LONG' | 'SHORT';
+  instrumentType: 'STOCK' | 'FUTURES' | 'OPTIONS';
+  entryPrice: number;
+  exitPrice: number | null;
+  quantity: number;
+  strikePrice?: number | null;
+  expiryDate?: string | null;
+  optionType?: 'CALL' | 'PUT' | null;
+  premium?: number | null;
+  profitLoss?: number | null;
+  entryDate: string;
+  exitDate?: string | null;
+  notes?: string | null;
+  
+  // Advanced journal fields
+  strategy?: string | null;
+  lessons?: string | null;
+  riskRewardRatio?: number | null;
+  stopLoss?: number | null;
+  targetPrice?: number | null;
+  timeFrame?: string | null;
+  marketCondition?: string | null;
+  preTradeEmotion?: string | null;
+  postTradeEmotion?: string | null;
+  tradeConfidence?: number | null;
+  tradeRating?: number | null;
+  setupImageUrl?: string | null;
+  sector?: string | null;
+
+  createdAt?: string;
+  updatedAt?: string;
+} 
