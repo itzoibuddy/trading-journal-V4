@@ -89,7 +89,12 @@ export default function HeatmapsPage() {
       // Use entryDate which is the correct property name
       const dateString = trade.entryDate;
       if (!dateString) return;
-      const date = parseISO(dateString);
+      
+      // Fix: Handle both string and Date types
+      const date = typeof dateString === 'string' 
+        ? parseISO(dateString) 
+        : dateString; // If it's already a Date object, use it directly
+        
       const dayIndex = getDay(date);
       
       dayStats[dayIndex].trades += 1;
