@@ -80,6 +80,24 @@ npm start
 - **Docker**: A Dockerfile is provided for containerized deployments
 - **Traditional Hosting**: Deploy the built application to any Node.js hosting service
 
+## Deployment on Vercel
+
+### Prerequisites
+1. A Vercel account linked to your GitHub repository
+2. A PostgreSQL database (we use Neon DB)
+
+### Steps to Deploy
+1. Push your code to GitHub
+2. Create a new project in Vercel and connect it to your GitHub repository
+3. Set the following environment variables in Vercel:
+   - `DATABASE_URL`: Your PostgreSQL connection string (from Neon DB)
+4. Deploy the project
+
+If you encounter "No Next.js version detected" error:
+1. Make sure your repository structure matches your local project
+2. Verify that package.json is at the root of your repository
+3. Ensure Next.js is listed in the dependencies section of package.json
+
 ## Contributing
 
 1. Fork the repository
