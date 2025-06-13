@@ -1,4 +1,4 @@
-# Trading Journal
+# Trading Journal 
 
 A comprehensive trading journal application for tracking and analyzing your trades.
 
