@@ -1,0 +1,2 @@
+symbol,type,instrumentType,entryPrice,exitPrice,quantity,entryDate,exitDate,profitLoss,notes,sector
+NIFTY,LONG,OPTIONS,29.6,21.4,75,2025-06-12T14:35:13,2025-06-12T14:40:41,-615,Test trade,Index 
