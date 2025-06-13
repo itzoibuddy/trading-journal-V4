@@ -1,10 +1,11 @@
 [build]
-  command = "NEXT_TYPESCRIPT_CHECK=0 npm run build"
+  command = "npm run build-no-ts"
   publish = ".next"
 
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
   NEXT_TYPESCRIPT_CHECK = "0"  # Disable TypeScript checking during build
+  NEXT_TELEMETRY_DISABLED = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
