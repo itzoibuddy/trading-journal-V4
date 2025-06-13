@@ -11,6 +11,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartData,
 } from 'chart.js';
 
 ChartJS.register(
@@ -42,7 +43,7 @@ export default function RiskManagementPage() {
   const [expectedValue, setExpectedValue] = useState<number>(0);
 
   // Risk-reward visualization data
-  const [riskRewardData, setRiskRewardData] = useState({
+  const [riskRewardData, setRiskRewardData] = useState<ChartData<'line'>>({
     labels: ['Current Price'],
     datasets: [
       {
@@ -116,10 +117,10 @@ export default function RiskManagementPage() {
   const updateRiskRewardVisualization = () => {
     if (!entryPrice || !stopLossPrice) return;
     
-    const pricePoints = [];
-    const labels = [];
-    const backgroundColors = [];
-    const borderColors = [];
+    const pricePoints: number[] = [];
+    const labels: string[] = [];
+    const backgroundColors: string[] = [];
+    const borderColors: string[] = [];
     
     // Add stop loss point
     pricePoints.push(stopLossPrice);
@@ -161,8 +162,8 @@ export default function RiskManagementPage() {
         {
           label: 'Price Levels',
           data: sortedData.map(item => item.price),
-          backgroundColor: sortedData.map(item => item.backgroundColor),
-          borderColor: sortedData.map(item => item.borderColor),
+          backgroundColor: sortedData.map(item => item.backgroundColor) as any,
+          borderColor: sortedData.map(item => item.borderColor) as any,
           borderWidth: 1,
           pointRadius: 6,
           pointHoverRadius: 8,
@@ -346,59 +347,47 @@ export default function RiskManagementPage() {
         </div>
       </div>
       
-      <div className="bg-white shadow rounded-xl p-6">
+      <div className="bg-white shadow rounded-xl p-6 mt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Risk-Reward Visualization</h3>
-        
-        <div className="h-80">
-          {riskRewardData.labels.length > 1 ? (
+        <div className="h-64">
+          {riskRewardData.labels && riskRewardData.labels.length > 0 && (
             <Line
               data={riskRewardData}
               options={{
+                responsive: true,
                 maintainAspectRatio: false,
                 scales: {
                   y: {
-                    title: {
-                      display: true,
-                      text: 'Price (₹)'
-                    }
+                    beginAtZero: false,
                   },
-                  x: {
-                    title: {
-                      display: true,
-                      text: 'Price Levels'
-                    }
-                  }
                 },
                 plugins: {
+                  legend: {
+                    display: false,
+                  },
                   tooltip: {
                     callbacks: {
                       label: function(context) {
-                        const label = context.dataset.label || '';
-                        const value = context.parsed.y;
-                        return `${label}: ₹${value}`;
+                        return `Price: ₹${context.parsed.y.toFixed(2)}`;
                       }
                     }
                   }
                 }
               }}
             />
-          ) : (
-            <div className="flex h-full items-center justify-center text-gray-500">
-              Enter entry, stop-loss, and take-profit prices to see visualization
-            </div>
           )}
         </div>
-        
-        <div className="mt-6 p-4 bg-blue-50 rounded-md">
-          <h4 className="font-medium text-blue-700 mb-2">Trading Guidelines</h4>
-          <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
-            <li>Aim for a risk-reward ratio of at least 1:2 for better long-term results</li>
-            <li>Never risk more than 1-2% of your account on a single trade</li>
-            <li>Always set stop-loss orders to protect your capital</li>
-            <li>Consider expected value (win rate × potential profit - loss rate × potential loss) before entering a trade</li>
-            <li>Adjust position size based on volatility and conviction level</li>
-          </ul>
-        </div>
+      </div>
+      
+      <div className="mt-6 p-4 bg-blue-50 rounded-md">
+        <h4 className="font-medium text-blue-700 mb-2">Trading Guidelines</h4>
+        <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
+          <li>Aim for a risk-reward ratio of at least 1:2 for better long-term results</li>
+          <li>Never risk more than 1-2% of your account on a single trade</li>
+          <li>Always set stop-loss orders to protect your capital</li>
+          <li>Consider expected value (win rate × potential profit - loss rate × potential loss) before entering a trade</li>
+          <li>Adjust position size based on volatility and conviction level</li>
+        </ul>
       </div>
     </div>
   );
