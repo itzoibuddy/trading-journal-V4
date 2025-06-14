@@ -15,6 +15,22 @@ interface Trade {
   exitDate: string | null;
   profitLoss: number | null;
   notes: string | null;
+  setupImageUrl?: string | null;
+  strategy?: string | null;
+  timeFrame?: string | null;
+  marketCondition?: string | null;
+  stopLoss?: number | null;
+  targetPrice?: number | null;
+  riskRewardRatio?: number | null;
+  preTradeEmotion?: string | null;
+  postTradeEmotion?: string | null;
+  tradeConfidence?: number | null;
+  tradeRating?: number | null;
+  lessons?: string | null;
+  instrumentType?: string | null;
+  strikePrice?: number | null;
+  expiryDate?: string | null;
+  optionType?: string | null;
 }
 
 function getDayPL(trades: Trade[]) {
@@ -40,6 +56,8 @@ export default function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [weeklyTotals, setWeeklyTotals] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [showTradeDetails, setShowTradeDetails] = useState<boolean>(false);
+  const [selectedTradeIndex, setSelectedTradeIndex] = useState<number | null>(null);
 
   // Set the current date in useEffect to ensure it runs on the client
   useEffect(() => {
@@ -128,6 +146,7 @@ export default function CalendarPage() {
           ...trade,
           entryDate: trade.entryDate.toISOString(),
           exitDate: trade.exitDate?.toISOString() || null,
+          expiryDate: trade.expiryDate?.toISOString() || null,
         })));
       } catch (err) {
         console.error('Error loading day trades:', err);
@@ -157,11 +176,22 @@ export default function CalendarPage() {
         ...trade,
         entryDate: trade.entryDate.toISOString(),
         exitDate: trade.exitDate?.toISOString() || null,
+        expiryDate: trade.expiryDate?.toISOString() || null,
       })));
     } catch (err) {
       console.error('Error loading day trades:', err);
       setError('Failed to load trades for the selected day.');
     }
+  };
+
+  const handleViewTradeDetails = (index: number) => {
+    setSelectedTradeIndex(index);
+    setShowTradeDetails(true);
+  };
+  
+  const handleCloseTradeDetails = () => {
+    setSelectedTradeIndex(null);
+    setShowTradeDetails(false);
   };
 
   const navigateToPreviousMonth = () => {
@@ -323,7 +353,7 @@ export default function CalendarPage() {
           {dayTrades.length === 0 && (
             <li className="py-2 text-gray-500">No trades on this day.</li>
           )}
-          {dayTrades.map((trade) => (
+          {dayTrades.map((trade, index) => (
             <li key={trade.id} className="py-2 flex justify-between items-center">
               <div>
                 <span className="font-medium">{trade.symbol}</span>
@@ -331,13 +361,211 @@ export default function CalendarPage() {
                   {trade.type === 'LONG' ? 'Long' : 'Short'}
                 </span>
               </div>
-              <span className={trade.profitLoss && trade.profitLoss > 0 ? 'text-green-600' : 'text-red-600'}>
-                {trade.profitLoss ? `₹${trade.profitLoss.toLocaleString('en-IN')}` : '-'}
-              </span>
+              <div className="flex items-center">
+                <span className={`mr-4 ${trade.profitLoss && trade.profitLoss > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {trade.profitLoss ? `₹${trade.profitLoss.toLocaleString('en-IN')}` : '-'}
+                </span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewTradeDetails(index);
+                  }}
+                  className="px-3 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md"
+                >
+                  Details
+                </button>
+              </div>
             </li>
           ))}
         </ul>
       </div>
+      
+      {/* Trade Details Modal */}
+      {showTradeDetails && selectedTradeIndex !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Trade Details: {dayTrades[selectedTradeIndex].symbol}
+                </h3>
+                <button
+                  onClick={handleCloseTradeDetails}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-6">
+                {/* Trade Setup Screenshot */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {dayTrades[selectedTradeIndex].setupImageUrl ? (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Trade Setup</h4>
+                      <img 
+                        src={dayTrades[selectedTradeIndex].setupImageUrl} 
+                        alt="Trade Setup" 
+                        className="w-full rounded-lg border border-gray-200"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x800?text=Image+Not+Found';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-gray-400 border border-dashed border-gray-300 rounded-lg">
+                      No screenshot available
+                    </div>
+                  )}
+                </div>
+                
+                {/* Trade Information */}
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Trade Information</h4>
+                  
+                  <div className="grid grid-cols-4 gap-4 mb-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Symbol</p>
+                      <p className="font-medium">{dayTrades[selectedTradeIndex].symbol}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Type</p>
+                      <p className={`font-medium ${dayTrades[selectedTradeIndex].type === 'LONG' ? 'text-green-700' : 'text-red-700'}`}>
+                        {dayTrades[selectedTradeIndex].type}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Strategy</p>
+                      <p className="font-medium">{dayTrades[selectedTradeIndex].strategy || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Time Frame</p>
+                      <p className="font-medium">{dayTrades[selectedTradeIndex].timeFrame || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Entry Price</p>
+                      <p className="font-medium">₹{dayTrades[selectedTradeIndex].entryPrice.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Exit Price</p>
+                      <p className="font-medium">
+                        {dayTrades[selectedTradeIndex].exitPrice 
+                          ? `₹${dayTrades[selectedTradeIndex].exitPrice.toLocaleString('en-IN')}` 
+                          : '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Quantity</p>
+                      <p className="font-medium">{dayTrades[selectedTradeIndex].quantity}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Profit/Loss</p>
+                      <p className={`font-medium ${dayTrades[selectedTradeIndex].profitLoss && dayTrades[selectedTradeIndex].profitLoss > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                        {dayTrades[selectedTradeIndex].profitLoss 
+                          ? `${dayTrades[selectedTradeIndex].profitLoss > 0 ? '+' : ''}₹${dayTrades[selectedTradeIndex].profitLoss.toLocaleString('en-IN')}` 
+                          : '-'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-4 mt-2">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Trade Analysis</h4>
+                    
+                    <div className="grid grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <p className="text-xs text-gray-500">Risk-Reward Ratio</p>
+                        <p className="font-medium">{dayTrades[selectedTradeIndex].riskRewardRatio || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Stop Loss</p>
+                        <p className="font-medium">
+                          {dayTrades[selectedTradeIndex].stopLoss 
+                            ? `₹${dayTrades[selectedTradeIndex].stopLoss.toLocaleString('en-IN')}` 
+                            : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Target Price</p>
+                        <p className="font-medium">
+                          {dayTrades[selectedTradeIndex].targetPrice 
+                            ? `₹${dayTrades[selectedTradeIndex].targetPrice.toLocaleString('en-IN')}` 
+                            : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Market Condition</p>
+                        <p className="font-medium">{dayTrades[selectedTradeIndex].marketCondition || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Pre-Trade Emotion</p>
+                        <p className="font-medium">{dayTrades[selectedTradeIndex].preTradeEmotion || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Post-Trade Emotion</p>
+                        <p className="font-medium">{dayTrades[selectedTradeIndex].postTradeEmotion || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Trade Confidence</p>
+                        <div className="flex items-center">
+                          {dayTrades[selectedTradeIndex].tradeConfidence ? (
+                            <>
+                              <span className={`font-medium ${
+                                dayTrades[selectedTradeIndex].tradeConfidence >= 8 ? 'text-green-700' : 
+                                dayTrades[selectedTradeIndex].tradeConfidence >= 5 ? 'text-amber-600' : 
+                                'text-red-700'
+                              }`}>
+                                {dayTrades[selectedTradeIndex].tradeConfidence}
+                              </span>
+                              <span className="ml-1 text-gray-400 text-xs">/10</span>
+                            </>
+                          ) : '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Trade Rating</p>
+                        <div className="flex items-center">
+                          {dayTrades[selectedTradeIndex].tradeRating ? (
+                            <>
+                              <span className={`font-medium ${
+                                dayTrades[selectedTradeIndex].tradeRating >= 8 ? 'text-green-700' : 
+                                dayTrades[selectedTradeIndex].tradeRating >= 5 ? 'text-amber-600' : 
+                                'text-red-700'
+                              }`}>
+                                {dayTrades[selectedTradeIndex].tradeRating}
+                              </span>
+                              <span className="ml-1 text-gray-400 text-xs">/10</span>
+                            </>
+                          ) : '-'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {(dayTrades[selectedTradeIndex].notes || dayTrades[selectedTradeIndex].lessons) && (
+                    <div className="border-t border-gray-200 pt-4 mt-2">
+                      {dayTrades[selectedTradeIndex].notes && (
+                        <div className="mb-3">
+                          <p className="text-xs text-gray-500 mb-1">Notes</p>
+                          <p className="text-sm">{dayTrades[selectedTradeIndex].notes}</p>
+                        </div>
+                      )}
+                      
+                      {dayTrades[selectedTradeIndex].lessons && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Lessons Learned</p>
+                          <p className="text-sm">{dayTrades[selectedTradeIndex].lessons}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
