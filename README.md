@@ -76,27 +76,30 @@ npm start
 
 ### Deployment Options
 
-- **Vercel**: Connect your GitHub repository for automatic deployments
+- **Netlify**: Connect your GitHub repository for automatic deployments
 - **Docker**: A Dockerfile is provided for containerized deployments
 - **Traditional Hosting**: Deploy the built application to any Node.js hosting service
 
-## Deployment on Vercel
+## Project Maintenance
 
-### Prerequisites
-1. A Vercel account linked to your GitHub repository
-2. A PostgreSQL database (we use Neon DB)
+### Cleaning Build Artifacts
 
-### Steps to Deploy
-1. Push your code to GitHub
-2. Create a new project in Vercel and connect it to your GitHub repository
-3. Set the following environment variables in Vercel:
-   - `DATABASE_URL`: Your PostgreSQL connection string (from Neon DB)
-4. Deploy the project
+To keep your project directory size manageable, you can clean up build artifacts:
 
-If you encounter "No Next.js version detected" error:
-1. Make sure your repository structure matches your local project
-2. Verify that package.json is at the root of your repository
-3. Ensure Next.js is listed in the dependencies section of package.json
+```bash
+# Clean the Next.js build directory
+npm run clean
+```
+
+For a more thorough cleanup before deployment or committing to version control:
+
+```bash
+# Remove node_modules (will need to run npm install again after)
+rm -rf node_modules
+npm run clean
+```
+
+This helps reduce the project size significantly when sharing or deploying.
 
 ## Contributing
 

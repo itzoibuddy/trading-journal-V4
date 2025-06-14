@@ -10,4 +10,4 @@ This directory contains the Prisma schema and migrations for the Trading Journal
 
 ## Database Configuration
 
-The application uses PostgreSQL for production (on Vercel) and can use SQLite for local development. 
+The application uses PostgreSQL for production and can use SQLite for local development. 

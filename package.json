@@ -12,13 +12,15 @@
     "db:migrate": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "clean": "rimraf .next",
+    "deep-clean": "rimraf .next node_modules"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.3.0",
+    "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^5.10.0",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/postcss": "^4.1.8",
@@ -47,6 +49,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
     "prisma": "^5.10.0",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }

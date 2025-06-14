@@ -5,7 +5,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Use PostgreSQL for production (Vercel)
+// Use PostgreSQL for production
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")

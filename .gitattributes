@@ -1,0 +1,12 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Don't diff or textually merge source maps
+*.map binary
+
+# Exclude package-lock.json from git diff
+package-lock.json -diff
+
+# Mark generated files
+.next/** -diff
+node_modules/** -diff 
