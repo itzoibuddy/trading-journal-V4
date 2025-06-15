@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { format, getDaysInMonth, startOfMonth, getDay, isSameDay, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { getTradesByDate } from '../actions/trade';
