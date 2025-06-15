@@ -9,14 +9,29 @@ import { getTrades, createTrade, updateTrade, deleteTrade } from '../actions/tra
 import { Trade, TradeFormData } from '../types/Trade';
 import Pagination from '../components/Pagination';
 
-// Helper function to convert Date objects to ISO strings
+// Improved helper function with debug logging
 function convertDatesToISOString(obj: any) {
+  console.log('Converting dates for object:', JSON.stringify(obj, (key, value) => {
+    // Custom serializer to identify Date objects
+    if (value instanceof Date) {
+      return `[Date: ${value.toISOString()}]`;
+    }
+    return value;
+  }, 2));
+  
   const result = { ...obj };
   ['entryDate', 'exitDate', 'expiryDate'].forEach((key) => {
     if (result[key] instanceof Date) {
+      console.log(`Converting ${key} from Date to ISO string`);
+      result[key] = result[key].toISOString();
+    } else if (result[key] && typeof result[key] === 'object' && 'toISOString' in result[key]) {
+      // Handle Date-like objects
+      console.log(`Converting ${key} from Date-like object to ISO string`);
       result[key] = result[key].toISOString();
     }
   });
+  
+  console.log('Converted result:', JSON.stringify(result, null, 2));
   return result;
 }
 

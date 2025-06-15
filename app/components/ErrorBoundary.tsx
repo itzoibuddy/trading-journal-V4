@@ -1,50 +1,52 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
-interface ErrorBoundaryProps {
+interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback: ReactNode;
 }
 
-export default function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
-  const [hasError, setHasError] = useState(false);
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
 
-  if (hasError) {
-    return (
-      fallback || (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 my-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">
-                Something went wrong. Please try refreshing the page or contact support if the problem persists.
-              </p>
-              <button
-                className="mt-2 text-sm font-medium text-red-700 hover:text-red-600"
-                onClick={() => setHasError(false)}
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-      )
-    );
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
-  return (
-    <div
-      onError={(error) => {
-        console.error('Error caught by ErrorBoundary:', error);
-        setHasError(true);
-      }}
-    >
-      {children}
-    </div>
-  );
-} 
+  static getDerivedStateFromError(error: Error): State {
+    // Update state so the next render will show the fallback UI
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Log the error to an error reporting service
+    console.error('Error boundary caught error:', error);
+    console.error('Component stack:', errorInfo.componentStack);
+    
+    // Send to logging service if available
+    if (typeof window !== 'undefined') {
+      // Log to browser console in detail
+      console.group('Detailed Error Information');
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Component stack:', errorInfo.componentStack);
+      console.groupEnd();
+    }
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      // Render fallback UI
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary; 
