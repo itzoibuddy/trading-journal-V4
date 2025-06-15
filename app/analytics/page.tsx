@@ -1,11 +1,11 @@
+export const dynamic = "force-dynamic";
+
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { getTrades } from '../actions/trade';
 import { Trade } from '../types/Trade';
 import ErrorBoundary from '../components/ErrorBoundary';
-
-export const dynamic = 'force-dynamic';
 
 export default function AnalyticsPage() {
   const [trades, setTrades] = useState<Trade[]>([]);

@@ -4,10 +4,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   poweredByHeader: false,
-  // Enable detailed error logging in production
-  onError: (error) => {
-    console.error('Next.js Error:', error);
-  },
   // Enable if you need to handle specific headers
   // async headers() {
   //   return [
