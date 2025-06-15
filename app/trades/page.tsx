@@ -9,6 +9,17 @@ import { getTrades, createTrade, updateTrade, deleteTrade } from '../actions/tra
 import { Trade, TradeFormData } from '../types/Trade';
 import Pagination from '../components/Pagination';
 
+// Helper function to convert Date objects to ISO strings
+function convertDatesToISOString(obj: any) {
+  const result = { ...obj };
+  ['entryDate', 'exitDate', 'expiryDate'].forEach((key) => {
+    if (result[key] instanceof Date) {
+      result[key] = result[key].toISOString();
+    }
+  });
+  return result;
+}
+
 const tradeSchema = z.object({
   symbol: z.string().min(1, 'Symbol is required'),
   type: z.enum(['LONG', 'SHORT']),
@@ -226,11 +237,8 @@ export default function TradesPage() {
       try {
         setIsLoading(true);
         const data = await getTrades();
-        setTrades(data.map(trade => ({
+        setTrades(data.map(trade => convertDatesToISOString({
           ...trade,
-          entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
-          exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
-          expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
           type: trade.type as 'LONG' | 'SHORT',
           instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
         })));
@@ -250,16 +258,10 @@ export default function TradesPage() {
     try {
       if (editId !== null) {
       // Edit existing trade
-        await updateTrade(Number(editId), {
-          ...data,
-          entryDate: data.entryDate instanceof Date ? data.entryDate.toISOString() : data.entryDate,
-        });
+        await updateTrade(Number(editId), convertDatesToISOString(data));
         const updatedTrades = await getTrades();
-        setTrades(updatedTrades.map(trade => ({
+        setTrades(updatedTrades.map(trade => convertDatesToISOString({
           ...trade,
-          entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
-          exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
-          expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
           type: trade.type as 'LONG' | 'SHORT',
           instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
         })));
@@ -268,13 +270,10 @@ export default function TradesPage() {
       reset();
     } else {
       // Add new trade
-        await createTrade(data);
+        await createTrade(convertDatesToISOString(data));
         const updatedTrades = await getTrades();
-        setTrades(updatedTrades.map(trade => ({
+        setTrades(updatedTrades.map(trade => convertDatesToISOString({
           ...trade,
-          entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
-          exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
-          expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
           type: trade.type as 'LONG' | 'SHORT',
           instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
         })));
@@ -659,7 +658,7 @@ export default function TradesPage() {
             // Import each trade
             for (const trade of processedTrades) {
               try {
-                await createTrade(trade);
+                await createTrade(convertDatesToISOString(trade));
               } catch (err) {
                 console.error("Error creating trade:", trade, err);
                 throw err;
@@ -668,10 +667,8 @@ export default function TradesPage() {
             
             // Refresh the trade list
             const updatedTrades = await getTrades();
-            setTrades(updatedTrades.map(trade => ({
+            setTrades(updatedTrades.map(trade => convertDatesToISOString({
               ...trade,
-              entryDate: trade.entryDate.toISOString(),
-              exitDate: trade.exitDate?.toISOString() || null,
               type: trade.type as 'LONG' | 'SHORT'
             })));
             
@@ -926,7 +923,7 @@ export default function TradesPage() {
             sector: firstLong.sector,
           };
           
-          processedTrades.push(consolidatedTrade);
+          processedTrades.push(convertDatesToISOString(consolidatedTrade));
         }
       }
     }
