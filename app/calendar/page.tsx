@@ -174,28 +174,22 @@ export default function CalendarPage() {
   const handleDateClick = async (date: Date) => {
     setSelectedDate(date);
     try {
-      // Format date for API query
-      const formattedDate = format(date, 'yyyy-MM-dd');
-      console.log('Fetching trades for date:', formattedDate);
+      console.log('Fetching trades for date:', format(date, 'yyyy-MM-dd'));
       
-      // Direct API call to get all trades
-      const response = await fetch('/api/trades');
-      if (!response.ok) {
-        throw new Error('Failed to fetch trades');
-      }
+      // Use the server action directly instead of API call + client filtering
+      const selectedDayTrades = await getTradesByDate(date);
       
-      const allTrades = await response.json();
-      console.log('All trades fetched:', allTrades.length);
+      // Convert dates to ISO strings for proper serialization
+      const formattedTrades = selectedDayTrades.map(trade => ({
+        ...trade,
+        entryDate: trade.entryDate.toISOString(),
+        exitDate: trade.exitDate?.toISOString() || null,
+        expiryDate: trade.expiryDate?.toISOString() || null,
+      }));
       
-      // Filter trades for the selected day
-      const selectedDayTrades = allTrades.filter((trade: any) => {
-        const tradeDate = new Date(trade.entryDate);
-        return isSameDay(tradeDate, date);
-      });
+      console.log('Filtered trades for selected day:', formattedTrades.length, JSON.stringify(formattedTrades, null, 2));
       
-      console.log('Filtered trades for selected day:', selectedDayTrades.length, JSON.stringify(selectedDayTrades, null, 2));
-      
-      setDayTrades(selectedDayTrades);
+      setDayTrades(formattedTrades);
     } catch (err) {
       console.error('Error loading day trades:', err);
       setError('Failed to load trades for the selected day.');
