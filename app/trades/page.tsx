@@ -253,6 +253,8 @@ export default function TradesPage() {
         await updateTrade(Number(editId), {
           ...data,
           entryDate: data.entryDate instanceof Date ? data.entryDate.toISOString() : data.entryDate,
+          exitDate: data.exitDate instanceof Date ? data.exitDate.toISOString() : data.exitDate,
+          expiryDate: data.expiryDate instanceof Date ? data.expiryDate.toISOString() : data.expiryDate,
         });
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => ({
@@ -268,7 +270,12 @@ export default function TradesPage() {
       reset();
     } else {
       // Add new trade
-        await createTrade(data);
+        await createTrade({
+          ...data,
+          entryDate: data.entryDate instanceof Date ? data.entryDate.toISOString() : data.entryDate,
+          exitDate: data.exitDate instanceof Date ? data.exitDate.toISOString() : data.exitDate,
+          expiryDate: data.expiryDate instanceof Date ? data.expiryDate.toISOString() : data.expiryDate,
+        });
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => ({
           ...trade,
@@ -659,7 +666,12 @@ export default function TradesPage() {
             // Import each trade
             for (const trade of processedTrades) {
               try {
-                await createTrade(trade);
+                await createTrade({
+                  ...trade,
+                  entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
+                  exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
+                  expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
+                });
               } catch (err) {
                 console.error("Error creating trade:", trade, err);
                 throw err;
@@ -670,8 +682,9 @@ export default function TradesPage() {
             const updatedTrades = await getTrades();
             setTrades(updatedTrades.map(trade => ({
               ...trade,
-              entryDate: trade.entryDate.toISOString(),
-              exitDate: trade.exitDate?.toISOString() || null,
+              entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
+              exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
+              expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
               type: trade.type as 'LONG' | 'SHORT'
             })));
             
