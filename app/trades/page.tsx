@@ -253,8 +253,6 @@ export default function TradesPage() {
         await updateTrade(Number(editId), {
           ...data,
           entryDate: data.entryDate instanceof Date ? data.entryDate.toISOString() : data.entryDate,
-          exitDate: data.exitDate instanceof Date ? data.exitDate.toISOString() : data.exitDate,
-          expiryDate: data.expiryDate instanceof Date ? data.expiryDate.toISOString() : data.expiryDate,
         });
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => ({
@@ -270,12 +268,7 @@ export default function TradesPage() {
       reset();
     } else {
       // Add new trade
-        await createTrade({
-          ...data,
-          entryDate: data.entryDate instanceof Date ? data.entryDate.toISOString() : data.entryDate,
-          exitDate: data.exitDate instanceof Date ? data.exitDate.toISOString() : data.exitDate,
-          expiryDate: data.expiryDate instanceof Date ? data.expiryDate.toISOString() : data.expiryDate,
-        });
+        await createTrade(data);
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => ({
           ...trade,
@@ -666,12 +659,7 @@ export default function TradesPage() {
             // Import each trade
             for (const trade of processedTrades) {
               try {
-                await createTrade({
-                  ...trade,
-                  entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
-                  exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
-                  expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
-                });
+                await createTrade(trade);
               } catch (err) {
                 console.error("Error creating trade:", trade, err);
                 throw err;
@@ -682,9 +670,8 @@ export default function TradesPage() {
             const updatedTrades = await getTrades();
             setTrades(updatedTrades.map(trade => ({
               ...trade,
-              entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
-              exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
-              expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
+              entryDate: trade.entryDate.toISOString(),
+              exitDate: trade.exitDate?.toISOString() || null,
               type: trade.type as 'LONG' | 'SHORT'
             })));
             
@@ -878,7 +865,7 @@ export default function TradesPage() {
           
           // Set entry date to the earliest LONG
           if (!currentSequence.entryDate || new Date(trade.entryDate) < new Date(currentSequence.entryDate)) {
-            currentSequence.entryDate = trade.entryDate;
+            currentSequence.entryDate = trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate;
           }
         } else if (trade.type === 'SHORT') {
           // If this SHORT matches the current sequence's quantity
@@ -886,7 +873,7 @@ export default function TradesPage() {
             // Complete this sequence
             currentSequence.short = trade;
             currentSequence.exitPrice = trade.entryPrice;
-            currentSequence.exitDate = trade.entryDate;
+            currentSequence.exitDate = trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate;
             currentSequence.profitLoss = (trade.entryPrice - currentSequence.avgEntryPrice) * currentSequence.totalQty;
             
             tradeSequences.push({...currentSequence});
@@ -929,7 +916,7 @@ export default function TradesPage() {
             exitPrice: sequence.exitPrice,
             quantity: sequence.totalQty,
             strikePrice: firstLong.strikePrice,
-            expiryDate: firstLong.expiryDate,
+            expiryDate: firstLong.expiryDate instanceof Date ? firstLong.expiryDate.toISOString() : firstLong.expiryDate,
             optionType: firstLong.optionType,
             premium: firstLong.premium,
             entryDate: sequence.entryDate,
