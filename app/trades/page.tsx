@@ -250,7 +250,10 @@ export default function TradesPage() {
     try {
       if (editId !== null) {
       // Edit existing trade
-        await updateTrade(Number(editId), data);
+        await updateTrade(Number(editId), {
+          ...data,
+          entryDate: data.entryDate instanceof Date ? data.entryDate.toISOString() : data.entryDate,
+        });
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => ({
           ...trade,
