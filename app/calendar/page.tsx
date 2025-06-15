@@ -3,8 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
-import { format, getDaysInMonth, startOfMonth, getDay, isSameDay, startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { getTradesByDate } from '../actions/trade';
+import { format, getDaysInMonth, startOfMonth, getDay, addDays, startOfWeek } from 'date-fns';
 
 interface Trade {
   id: number;
@@ -48,28 +47,24 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Helper: Convert a JS Date to IST midnight
-function toISTMidnight(date: Date) {
-  // IST is UTC+5:30
-  const istOffset = 5.5 * 60; // in minutes
-  const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-  const ist = new Date(utc + istOffset * 60000);
-  ist.setHours(0, 0, 0, 0);
-  return ist;
+// Helper: Format date to YYYY-MM-DD for consistent comparison
+function formatDateForComparison(date: Date | string) {
+  if (typeof date === 'string') {
+    date = new Date(date);
+  }
+  return format(date, 'yyyy-MM-dd');
 }
 
-// Helper: Check if two dates are the same IST day
-function isSameISTDay(dateA: Date, dateB: Date) {
-  const a = toISTMidnight(dateA);
-  const b = toISTMidnight(dateB);
-  return a.getTime() === b.getTime();
+// Helper: Check if two dates are the same day (ignoring time)
+function isSameDay(dateA: Date | string, dateB: Date | string) {
+  return formatDateForComparison(dateA) === formatDateForComparison(dateB);
 }
 
 export default function CalendarPage() {
   // Initialize with empty values first
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null);
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [allTrades, setAllTrades] = useState<Trade[]>([]);
   const [dayTrades, setDayTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,20 +86,23 @@ export default function CalendarPage() {
   const daysInMonth = currentMonth ? getDaysInMonth(currentMonth) : 30;
   const firstDayOfWeek = currentMonth ? getDay(startOfMonth(currentMonth)) : 0; // 0 (Sun) - 6 (Sat)
 
+  // Fetch all trades when the month changes
   useEffect(() => {
-    if (!selectedDate || !currentMonth) return;
+    if (!currentMonth) return;
     
     async function loadTradesForMonth() {
       try {
         setIsLoading(true);
         
-        // Fetch all trades instead of filtering by date
+        // Fetch all trades
         const response = await fetch('/api/trades');
         if (!response.ok) {
           throw new Error('Failed to fetch trades');
         }
+        
         const data = await response.json();
-        setTrades(data);
+        console.log(`Fetched ${data.length} trades from API`);
+        setAllTrades(data);
         
         // Calculate monthly total
         const monthStart = new Date(year, month, 1);
@@ -147,8 +145,9 @@ export default function CalendarPage() {
         
         // Load trades for the selected day
         if (selectedDate) {
-          await loadTradesForDay(selectedDate);
+          updateDayTrades(selectedDate, data);
         }
+        
         setError(null);
       } catch (err) {
         console.error('Error loading trades:', err);
@@ -158,26 +157,28 @@ export default function CalendarPage() {
       }
     }
     
-    async function loadTradesForDay(date: Date) {
-      try {
-        const dayTrades = await getTradesByDate(date);
-        console.log('Trades found for day:', dayTrades.length, JSON.stringify(dayTrades, null, 2));
-        setDayTrades(dayTrades.map(trade => ({
-          ...trade,
-          entryDate: trade.entryDate.toISOString(),
-          exitDate: trade.exitDate?.toISOString() || null,
-          expiryDate: trade.expiryDate?.toISOString() || null,
-        })));
-      } catch (err) {
-        console.error('Error loading day trades:', err);
-      }
-    }
-    
     loadTradesForMonth();
+  }, [year, month, currentMonth]);
+  
+  // Update day trades whenever selected date changes
+  useEffect(() => {
+    if (selectedDate && allTrades.length > 0) {
+      updateDayTrades(selectedDate, allTrades);
+    }
+  }, [selectedDate, allTrades]);
+  
+  // Function to update day trades based on selected date
+  function updateDayTrades(date: Date, trades: Trade[]) {
+    const selectedDayStr = formatDateForComparison(date);
     
-    // Load trades for the selected day
-    loadTradesForDay(selectedDate);
-  }, [year, month, selectedDate, currentMonth]);
+    const filteredTrades = trades.filter(trade => {
+      const tradeDateStr = formatDateForComparison(trade.entryDate);
+      return tradeDateStr === selectedDayStr;
+    });
+    
+    console.log(`Trades found for day ${selectedDayStr}:`, filteredTrades.length, JSON.stringify(filteredTrades, null, 2));
+    setDayTrades(filteredTrades);
+  }
 
   // Build the grid for the month
   const days = [];
@@ -188,19 +189,8 @@ export default function CalendarPage() {
     days.push(new Date(year, month, d));
   }
 
-  const handleDateClick = async (date: Date) => {
+  const handleDateClick = (date: Date) => {
     setSelectedDate(date);
-    try {
-      // Fetch all trades (already in state)
-      // Use IST-based filtering
-      const selectedDayTrades = trades.filter((trade: any) => {
-        return isSameISTDay(new Date(trade.entryDate), date);
-      });
-      setDayTrades(selectedDayTrades);
-    } catch (err) {
-      console.error('Error loading day trades:', err);
-      setError('Failed to load trades for the selected day.');
-    }
   };
 
   const handleViewTradeDetails = (index: number) => {
@@ -292,9 +282,10 @@ export default function CalendarPage() {
                   return <div key={idx} />;
                 }
                 
-                // Find trades for this day
-                const dayTrades = trades.filter(trade => 
-                  isSameISTDay(new Date(trade.entryDate), date)
+                // Find trades for this day using consistent date comparison
+                const dayStr = formatDateForComparison(date);
+                const dayTrades = allTrades.filter(trade => 
+                  formatDateForComparison(trade.entryDate) === dayStr
                 );
                 
                 const pl = getDayPL(dayTrades);
@@ -322,7 +313,7 @@ export default function CalendarPage() {
                 }
                 
                 // Highlight the selected date
-                if (selectedDate && isSameISTDay(date, selectedDate)) {
+                if (selectedDate && isSameDay(date, selectedDate)) {
                   border = 'border-2 border-blue-500';
                 }
                 
