@@ -48,6 +48,23 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Helper: Convert a JS Date to IST midnight
+function toISTMidnight(date: Date) {
+  // IST is UTC+5:30
+  const istOffset = 5.5 * 60; // in minutes
+  const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+  const ist = new Date(utc + istOffset * 60000);
+  ist.setHours(0, 0, 0, 0);
+  return ist;
+}
+
+// Helper: Check if two dates are the same IST day
+function isSameISTDay(dateA: Date, dateB: Date) {
+  const a = toISTMidnight(dateA);
+  const b = toISTMidnight(dateB);
+  return a.getTime() === b.getTime();
+}
+
 export default function CalendarPage() {
   // Initialize with empty values first
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -174,22 +191,12 @@ export default function CalendarPage() {
   const handleDateClick = async (date: Date) => {
     setSelectedDate(date);
     try {
-      console.log('Fetching trades for date:', format(date, 'yyyy-MM-dd'));
-      
-      // Use the server action directly instead of API call + client filtering
-      const selectedDayTrades = await getTradesByDate(date);
-      
-      // Convert dates to ISO strings for proper serialization
-      const formattedTrades = selectedDayTrades.map(trade => ({
-        ...trade,
-        entryDate: trade.entryDate.toISOString(),
-        exitDate: trade.exitDate?.toISOString() || null,
-        expiryDate: trade.expiryDate?.toISOString() || null,
-      }));
-      
-      console.log('Filtered trades for selected day:', formattedTrades.length, JSON.stringify(formattedTrades, null, 2));
-      
-      setDayTrades(formattedTrades);
+      // Fetch all trades (already in state)
+      // Use IST-based filtering
+      const selectedDayTrades = trades.filter((trade: any) => {
+        return isSameISTDay(new Date(trade.entryDate), date);
+      });
+      setDayTrades(selectedDayTrades);
     } catch (err) {
       console.error('Error loading day trades:', err);
       setError('Failed to load trades for the selected day.');
@@ -287,7 +294,7 @@ export default function CalendarPage() {
                 
                 // Find trades for this day
                 const dayTrades = trades.filter(trade => 
-                  isSameDay(new Date(trade.entryDate), date)
+                  isSameISTDay(new Date(trade.entryDate), date)
                 );
                 
                 const pl = getDayPL(dayTrades);
@@ -315,7 +322,7 @@ export default function CalendarPage() {
                 }
                 
                 // Highlight the selected date
-                if (selectedDate && isSameDay(date, selectedDate)) {
+                if (selectedDate && isSameISTDay(date, selectedDate)) {
                   border = 'border-2 border-blue-500';
                 }
                 
