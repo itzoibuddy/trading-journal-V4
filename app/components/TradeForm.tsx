@@ -1,392 +1,688 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { TradeFormData, createTrade, updateTrade } from '../actions/trade';
+import { TradeFormData } from '../types/Trade';
 
 const tradeSchema = z.object({
   symbol: z.string().min(1, 'Symbol is required'),
   type: z.enum(['LONG', 'SHORT']),
   instrumentType: z.enum(['STOCK', 'FUTURES', 'OPTIONS']).default('STOCK'),
-  entryPrice: z.coerce.number().positive('Entry price must be positive'),
-  exitPrice: z.coerce.number().optional().nullable(),
-  quantity: z.coerce.number().positive('Quantity must be positive'),
-  strikePrice: z.coerce.number().positive('Strike price must be positive').optional().nullable(),
+  entryPrice: z.number().positive('Entry price must be positive'),
+  exitPrice: z.number().optional().nullable(),
+  quantity: z.number().positive('Quantity must be positive'),
+  strikePrice: z.number().positive('Strike price must be positive').optional().nullable(),
   expiryDate: z.string().optional().nullable(),
   optionType: z.enum(['CALL', 'PUT']).optional().nullable(),
-  premium: z.coerce.number().optional().nullable(),
   entryDate: z.string(),
   exitDate: z.string().optional().nullable(),
-  profitLoss: z.coerce.number().optional().nullable(),
-  notes: z.string().optional().nullable(),
+  profitLoss: z.number().optional().nullable(),
+  notes: z.string().optional(),
   sector: z.string().optional().nullable(),
-  strategy: z.string().optional().nullable(),
-  setupImageUrl: z.string().optional().nullable(),
-  preTradeEmotion: z.string().optional().nullable(),
-  postTradeEmotion: z.string().optional().nullable(),
-  tradeConfidence: z.coerce.number().min(1).max(10).optional().nullable(),
-  tradeRating: z.coerce.number().min(1).max(10).optional().nullable(),
-  lessons: z.string().optional().nullable(),
-  riskRewardRatio: z.coerce.number().positive().optional().nullable(),
-  stopLoss: z.coerce.number().optional().nullable(),
-  targetPrice: z.coerce.number().optional().nullable(),
-  timeFrame: z.string().optional().nullable(),
-  marketCondition: z.string().optional().nullable(),
+  strategy: z.string().optional(),
+  timeFrame: z.string().optional(),
+  marketCondition: z.string().optional(),
+  stopLoss: z.number().optional(),
+  targetPrice: z.number().optional(),
+  riskRewardRatio: z.number().optional(),
+  preTradeEmotion: z.string().optional(),
+  postTradeEmotion: z.string().optional(),
+  tradeConfidence: z.number().optional(),
+  tradeRating: z.number().optional(),
+  lessons: z.string().optional(),
+  setupImageUrl: z.string().optional(),
 });
 
-type TradeFormProps = {
-  initialData?: TradeFormData & { id?: number };
-  onSuccess?: () => void;
-  onCancel?: () => void;
+// Helper function to convert lots to quantity based on symbol
+const convertLotsToQuantity = (lots: number, symbol: string): number => {
+  if (symbol === 'NIFTY') return lots * 75;
+  if (symbol === 'SENSEX') return lots * 20;
+  return lots; // Default case for other symbols
 };
 
-export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const isEditing = !!initialData?.id;
+// Helper function to calculate lot size for a symbol
+const getLotSize = (symbol: string): number => {
+  if (symbol === 'NIFTY') return 75;
+  if (symbol === 'SENSEX') return 20;
+  return 1; // Default case for other symbols
+};
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<TradeFormData>({
+interface TradeFormProps {
+  onSubmit: (data: TradeFormData) => Promise<void>;
+  editTrade: {
+    index: number | null;
+    id: string | null;
+    data?: TradeFormData;
+  };
+  onCancelEdit: () => void;
+}
+
+export default function TradeForm({ onSubmit, editTrade, onCancelEdit }: TradeFormProps) {
+  const [selectedInstrumentType, setSelectedInstrumentType] = useState<string>("STOCK");
+  const [inputAsLots, setInputAsLots] = useState<boolean>(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+  } = useForm<TradeFormData>({
     resolver: zodResolver(tradeSchema),
-    defaultValues: initialData || {
-      type: 'LONG',
+    defaultValues: {
       instrumentType: 'STOCK',
-      entryDate: new Date().toISOString().split('T')[0],
-    },
+      type: 'LONG',
+    }
   });
 
-  const instrumentType = watch('instrumentType');
+  // Add the watch variables for calculations
+  const watchType = watch('type');
+  const watchInstrumentType = watch('instrumentType');
+  const watchEntryPrice = watch('entryPrice');
+  const watchExitPrice = watch('exitPrice');
+  const watchQuantity = watch('quantity');
+  const watchOptionType = watch('optionType');
+  const watchStrikePrice = watch('strikePrice');
+  const watchStopLoss = watch('stopLoss');
+  const watchTargetPrice = watch('targetPrice');
 
-  const onSubmit = async (data: TradeFormData) => {
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      if (isEditing && initialData.id) {
-        await updateTrade(initialData.id, data);
-      } else {
-        await createTrade(data);
+  // Auto-calculate profit/loss
+  useEffect(() => {
+    if (watchEntryPrice && watchExitPrice && watchQuantity) {
+      let profitLoss = 0;
+      
+      if (watchType === 'LONG') {
+        profitLoss = (watchExitPrice - watchEntryPrice) * watchQuantity;
+      } else { // SHORT
+        profitLoss = (watchEntryPrice - watchExitPrice) * watchQuantity;
       }
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      console.error('Error submitting trade:', err);
-      setError('Failed to save trade. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      
+      setValue('profitLoss', profitLoss);
     }
+  }, [watchType, watchEntryPrice, watchExitPrice, watchQuantity, setValue]);
+
+  // Auto-calculate risk-reward ratio
+  useEffect(() => {
+    if (watchEntryPrice && watchStopLoss && watchTargetPrice) {
+      let risk = 0;
+      let reward = 0;
+      let riskRewardRatio = 0;
+      
+      if (watchType === 'LONG') {
+        risk = Math.abs(watchEntryPrice - watchStopLoss);
+        reward = Math.abs(watchTargetPrice - watchEntryPrice);
+      } else { // SHORT
+        risk = Math.abs(watchStopLoss - watchEntryPrice);
+        reward = Math.abs(watchEntryPrice - watchTargetPrice);
+      }
+      
+      if (risk > 0) {
+        riskRewardRatio = parseFloat((reward / risk).toFixed(2));
+        setValue('riskRewardRatio', riskRewardRatio);
+      }
+    }
+  }, [watchType, watchEntryPrice, watchStopLoss, watchTargetPrice, setValue]);
+
+  // Set form values when editing
+  useEffect(() => {
+    if (editTrade.id !== null && editTrade.data) {
+      const trade = editTrade.data;
+      
+      // Check if this is likely a lot-based quantity for NIFTY or SENSEX
+      const symbol = trade.symbol.toUpperCase();
+      const lotSize = getLotSize(symbol);
+      const isLotBased = (symbol === 'NIFTY' || symbol === 'SENSEX') && 
+                          trade.quantity && (trade.quantity % lotSize === 0);
+      
+      // Set the inputAsLots state based on the trade
+      setInputAsLots(isLotBased);
+      
+      // Set form values - basic fields
+      setValue('symbol', trade.symbol);
+      setValue('type', trade.type);
+      setValue('instrumentType', trade.instrumentType || 'STOCK');
+      setValue('entryPrice', trade.entryPrice);
+      setValue('exitPrice', trade.exitPrice || undefined);
+      setValue('quantity', trade.quantity);
+      setValue('entryDate', trade.entryDate);
+      setValue('exitDate', trade.exitDate || undefined);
+      setValue('profitLoss', trade.profitLoss || undefined);
+      setValue('notes', trade.notes || '');
+      setValue('sector', trade.sector || '');
+      
+      // Set options/futures specific fields
+      if (trade.instrumentType === 'OPTIONS') {
+        setValue('strikePrice', trade.strikePrice || undefined);
+        setValue('expiryDate', trade.expiryDate || undefined);
+        setValue('optionType', trade.optionType || undefined);
+      } else if (trade.instrumentType === 'FUTURES') {
+        setValue('expiryDate', trade.expiryDate || undefined);
+      }
+      
+      // Set advanced trade journal fields
+      setValue('strategy', trade.strategy || '');
+      setValue('timeFrame', trade.timeFrame || '');
+      setValue('marketCondition', trade.marketCondition || '');
+      setValue('stopLoss', trade.stopLoss || undefined);
+      setValue('targetPrice', trade.targetPrice || undefined);
+      setValue('riskRewardRatio', trade.riskRewardRatio || undefined);
+      setValue('preTradeEmotion', trade.preTradeEmotion || '');
+      setValue('postTradeEmotion', trade.postTradeEmotion || '');
+      setValue('tradeConfidence', trade.tradeConfidence || undefined);
+      setValue('tradeRating', trade.tradeRating || undefined);
+      setValue('lessons', trade.lessons || '');
+      setValue('setupImageUrl', trade.setupImageUrl || '');
+      
+      setSelectedInstrumentType(trade.instrumentType || 'STOCK');
+    }
+  }, [editTrade, setValue]);
+
+  const handleFormSubmit = async (data: TradeFormData) => {
+    await onSubmit(data);
+    reset();
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-          <p>{error}</p>
-        </div>
-      )}
+    <div className="bg-white shadow rounded-xl p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">{editTrade.id !== null ? 'Edit Trade' : 'Add New Trade'}</h3>
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Instrument Type */}
+          <div>
+            <label htmlFor="instrumentType" className="block text-sm font-medium text-gray-700 mb-1">
+              Instrument Type
+            </label>
+            <select
+              id="instrumentType"
+              {...register('instrumentType')}
+              onChange={(e) => {
+                setSelectedInstrumentType(e.target.value);
+                // Set default option type when switching to OPTIONS
+                if (e.target.value === 'OPTIONS') {
+                  setValue('optionType', 'CALL');
+                }
+              }}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              <option value="STOCK">Stock</option>
+              <option value="FUTURES">Futures</option>
+              <option value="OPTIONS">Options</option>
+            </select>
+            {errors.instrumentType && <p className="mt-1 text-sm text-red-600">{errors.instrumentType.message}</p>}
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Basic Trade Information */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Symbol</label>
-          <input
-            type="text"
-            {...register('symbol')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.symbol && <p className="mt-1 text-sm text-red-600">{errors.symbol.message}</p>}
-        </div>
+          {/* Symbol */}
+          <div>
+            <label htmlFor="symbol" className="block text-sm font-medium text-gray-700 mb-1">
+              Symbol
+            </label>
+            <input
+              type="text"
+              id="symbol"
+              {...register('symbol')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="e.g. RELIANCE"
+            />
+            {errors.symbol && <p className="mt-1 text-sm text-red-600">{errors.symbol.message}</p>}
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Type</label>
-          <select
-            {...register('type')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="LONG">Long</option>
-            <option value="SHORT">Short</option>
-          </select>
-          {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
-        </div>
+          {/* Type (LONG/SHORT) */}
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+              Type
+            </label>
+            <select
+              id="type"
+              {...register('type')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              <option value="LONG">Long</option>
+              <option value="SHORT">Short</option>
+            </select>
+            {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Instrument Type</label>
-          <select
-            {...register('instrumentType')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="STOCK">Stock</option>
-            <option value="FUTURES">Futures</option>
-            <option value="OPTIONS">Options</option>
-          </select>
-        </div>
+          {/* Entry Price */}
+          <div>
+            <label htmlFor="entryPrice" className="block text-sm font-medium text-gray-700 mb-1">
+              Entry Price (₹)
+            </label>
+            <input
+              type="number"
+              id="entryPrice"
+              step="0.01"
+              {...register('entryPrice', { valueAsNumber: true })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+            {errors.entryPrice && <p className="mt-1 text-sm text-red-600">{errors.entryPrice.message}</p>}
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Entry Price</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('entryPrice')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.entryPrice && <p className="mt-1 text-sm text-red-600">{errors.entryPrice.message}</p>}
-        </div>
+          {/* Exit Price */}
+          <div>
+            <label htmlFor="exitPrice" className="block text-sm font-medium text-gray-700 mb-1">
+              Exit Price (₹)
+            </label>
+            <input
+              type="number"
+              id="exitPrice"
+              step="0.01"
+              {...register('exitPrice', { valueAsNumber: true })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+            {errors.exitPrice && <p className="mt-1 text-sm text-red-600">{errors.exitPrice.message}</p>}
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Exit Price</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('exitPrice')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Quantity</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('quantity')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.quantity && <p className="mt-1 text-sm text-red-600">{errors.quantity.message}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Entry Date</label>
-          <input
-            type="date"
-            {...register('entryDate')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          {errors.entryDate && <p className="mt-1 text-sm text-red-600">{errors.entryDate.message}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Exit Date</label>
-          <input
-            type="date"
-            {...register('exitDate')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">P&L</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('profitLoss')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        {/* Options/Futures specific fields */}
-        {instrumentType !== 'STOCK' && (
-          <>
-            {instrumentType === 'OPTIONS' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Strike Price</label>
+          {/* Quantity */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
+                Quantity
+                {watch('symbol') && (watch('symbol').toUpperCase() === 'NIFTY' || watch('symbol').toUpperCase() === 'SENSEX') && (
+                  <span className="text-xs text-gray-500 ml-1">
+                    (1 lot = {watch('symbol').toUpperCase() === 'NIFTY' ? '75' : '20'} qty)
+                  </span>
+                )}
+              </label>
+              {watch('symbol') && (watch('symbol').toUpperCase() === 'NIFTY' || watch('symbol').toUpperCase() === 'SENSEX') && (
+                <div className="flex items-center">
                   <input
-                    type="number"
-                    step="0.01"
-                    {...register('strikePrice')}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    id="inputAsLots"
+                    type="checkbox"
+                    checked={inputAsLots}
+                    onChange={(e) => setInputAsLots(e.target.checked)}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
+                  <label htmlFor="inputAsLots" className="ml-2 text-xs text-gray-700">
+                    Input as lots
+                  </label>
                 </div>
+              )}
+            </div>
+            <input
+              type="number"
+              id="quantity"
+              {...register('quantity', { valueAsNumber: true })}
+              onChange={(e) => {
+                if (inputAsLots && watch('symbol')) {
+                  const symbol = watch('symbol').toUpperCase();
+                  if (symbol === 'NIFTY' || symbol === 'SENSEX') {
+                    const lots = parseFloat(e.target.value);
+                    if (!isNaN(lots)) {
+                      const actualQty = convertLotsToQuantity(lots, symbol);
+                      setValue('quantity', actualQty);
+                    }
+                  }
+                }
+              }}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder={inputAsLots ? "Enter lots" : "Enter quantity"}
+            />
+            {errors.quantity && <p className="mt-1 text-sm text-red-600">{errors.quantity.message}</p>}
+          </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Option Type</label>
-                  <select
-                    {...register('optionType')}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  >
-                    <option value="">Select...</option>
-                    <option value="CALL">Call</option>
-                    <option value="PUT">Put</option>
-                  </select>
-                </div>
+          {/* Sector */}
+          <div>
+            <label htmlFor="sector" className="block text-sm font-medium text-gray-700 mb-1">
+              Sector
+            </label>
+            <input
+              type="text"
+              id="sector"
+              {...register('sector')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="e.g. Technology, Banking"
+            />
+          </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Premium</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register('premium')}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                  />
-                </div>
-              </>
-            )}
+          {/* Entry Date */}
+          <div>
+            <label htmlFor="entryDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Entry Date
+            </label>
+            <input
+              type="datetime-local"
+              id="entryDate"
+              {...register('entryDate')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+            {errors.entryDate && <p className="mt-1 text-sm text-red-600">{errors.entryDate.message}</p>}
+          </div>
 
+          {/* Exit Date */}
+          <div>
+            <label htmlFor="exitDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Exit Date
+            </label>
+            <input
+              type="datetime-local"
+              id="exitDate"
+              {...register('exitDate')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+            {errors.exitDate && <p className="mt-1 text-sm text-red-600">{errors.exitDate.message}</p>}
+          </div>
+
+          {/* Conditional fields for OPTIONS */}
+          {selectedInstrumentType === 'OPTIONS' && (
+            <>
+              {/* Strike Price */}
+              <div>
+                <label htmlFor="strikePrice" className="block text-sm font-medium text-gray-700 mb-1">
+                  Strike Price (₹)
+                </label>
+                <input
+                  type="number"
+                  id="strikePrice"
+                  step="0.01"
+                  {...register('strikePrice', { valueAsNumber: true })}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+                {errors.strikePrice && <p className="mt-1 text-sm text-red-600">{errors.strikePrice.message}</p>}
+              </div>
+
+              {/* Option Type */}
+              <div>
+                <label htmlFor="optionType" className="block text-sm font-medium text-gray-700 mb-1">
+                  Option Type <span className="text-xs text-gray-500">(Required)</span>
+                </label>
+                <select
+                  id="optionType"
+                  {...register('optionType')}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  defaultValue="CALL"
+                >
+                  <option value="CALL">Call</option>
+                  <option value="PUT">Put</option>
+                </select>
+                {errors.optionType && <p className="mt-1 text-sm text-red-600">{errors.optionType.message}</p>}
+              </div>
+            </>
+          )}
+
+          {/* Conditional fields for FUTURES and OPTIONS */}
+          {(selectedInstrumentType === 'FUTURES' || selectedInstrumentType === 'OPTIONS') && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Expiry Date</label>
+              <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Expiry Date
+              </label>
               <input
                 type="date"
+                id="expiryDate"
                 {...register('expiryDate')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
+              {errors.expiryDate && <p className="mt-1 text-sm text-red-600">{errors.expiryDate.message}</p>}
             </div>
-          </>
-        )}
+          )}
 
-        {/* Additional fields */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Sector</label>
-          <input
-            type="text"
-            {...register('sector')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
+          {/* Profit/Loss */}
+          <div>
+            <label htmlFor="profitLoss" className="block text-sm font-medium text-gray-700 mb-1">
+              Profit/Loss (₹) <span className="text-xs text-gray-500">(Auto-calculated)</span>
+            </label>
+            <input
+              type="number"
+              id="profitLoss"
+              step="0.01"
+              {...register('profitLoss', { valueAsNumber: true })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+            {errors.profitLoss && <p className="mt-1 text-sm text-red-600">{errors.profitLoss.message}</p>}
+          </div>
         </div>
 
+        {/* Notes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Strategy</label>
-          <input
-            type="text"
-            {...register('strategy')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Time Frame</label>
-          <input
-            type="text"
-            placeholder="e.g., 5m, 1h, Daily"
-            {...register('timeFrame')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Market Condition</label>
-          <input
-            type="text"
-            placeholder="e.g., Bullish, Bearish, Sideways"
-            {...register('marketCondition')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Risk-Reward Ratio</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('riskRewardRatio')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Stop Loss</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('stopLoss')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Target Price</label>
-          <input
-            type="number"
-            step="0.01"
-            {...register('targetPrice')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Trade Confidence (1-10)</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            {...register('tradeConfidence')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Trade Rating (1-10)</label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            {...register('tradeRating')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Pre-Trade Emotion</label>
-          <input
-            type="text"
-            {...register('preTradeEmotion')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Post-Trade Emotion</label>
-          <input
-            type="text"
-            {...register('postTradeEmotion')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Setup Image URL</label>
-          <input
-            type="text"
-            {...register('setupImageUrl')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div className="md:col-span-2 lg:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Lessons Learned</label>
+          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+            Notes
+          </label>
           <textarea
-            rows={3}
-            {...register('lessons')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div className="md:col-span-2 lg:col-span-3">
-          <label className="block text-sm font-medium text-gray-700">Notes</label>
-          <textarea
+            id="notes"
             rows={3}
             {...register('notes')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder="Add your trade notes here..."
+          ></textarea>
         </div>
-      </div>
 
-      <div className="flex justify-end space-x-3">
-        {onCancel && (
+        {/* Enhanced Trade Journal Features */}
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <h4 className="text-md font-semibold text-gray-800 mb-4">Advanced Trade Journal</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            {/* Strategy */}
+            <div>
+              <label htmlFor="strategy" className="block text-sm font-medium text-gray-700 mb-1">
+                Strategy
+              </label>
+              <input
+                type="text"
+                id="strategy"
+                {...register('strategy')}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="e.g. Breakout, Support Bounce"
+              />
+            </div>
+            
+            {/* Time Frame */}
+            <div>
+              <label htmlFor="timeFrame" className="block text-sm font-medium text-gray-700 mb-1">
+                Time Frame
+              </label>
+              <select
+                id="timeFrame"
+                {...register('timeFrame')}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select time frame</option>
+                <option value="1m">1 minute</option>
+                <option value="2m">2 minutes</option>
+                <option value="5m">5 minutes</option>
+                <option value="15m">15 minutes</option>
+                <option value="30m">30 minutes</option>
+                <option value="1h">1 hour</option>
+                <option value="4h">4 hours</option>
+                <option value="Daily">Daily</option>
+                <option value="Weekly">Weekly</option>
+              </select>
+            </div>
+            
+            {/* Market Condition */}
+            <div>
+              <label htmlFor="marketCondition" className="block text-sm font-medium text-gray-700 mb-1">
+                Market Condition
+              </label>
+              <select
+                id="marketCondition"
+                {...register('marketCondition')}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select market condition</option>
+                <option value="Bullish">Bullish</option>
+                <option value="Bearish">Bearish</option>
+                <option value="Sideways">Sideways</option>
+                <option value="Volatile">Volatile</option>
+                <option value="Trending">Trending</option>
+                <option value="Ranging">Ranging</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            {/* Stop Loss */}
+            <div>
+              <label htmlFor="stopLoss" className="block text-sm font-medium text-gray-700 mb-1">
+                Stop Loss (₹)
+              </label>
+              <input
+                type="number"
+                id="stopLoss"
+                step="0.01"
+                {...register('stopLoss', { valueAsNumber: true })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Target Price */}
+            <div>
+              <label htmlFor="targetPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                Target Price (₹)
+              </label>
+              <input
+                type="number"
+                id="targetPrice"
+                step="0.01"
+                {...register('targetPrice', { valueAsNumber: true })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Risk-Reward Ratio */}
+            <div>
+              <label htmlFor="riskRewardRatio" className="block text-sm font-medium text-gray-700 mb-1">
+                Risk-Reward Ratio <span className="text-xs text-gray-500">(Auto-calculated)</span>
+              </label>
+              <input
+                type="number"
+                id="riskRewardRatio"
+                step="0.01"
+                {...register('riskRewardRatio', { valueAsNumber: true })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="e.g. 1.5, 2.0, 3.0"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            {/* Pre-Trade Emotion */}
+            <div>
+              <label htmlFor="preTradeEmotion" className="block text-sm font-medium text-gray-700 mb-1">
+                Pre-Trade Emotion
+              </label>
+              <select
+                id="preTradeEmotion"
+                {...register('preTradeEmotion')}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select emotion</option>
+                <option value="Confident">Confident</option>
+                <option value="Nervous">Nervous</option>
+                <option value="Excited">Excited</option>
+                <option value="Fearful">Fearful</option>
+                <option value="Calm">Calm</option>
+                <option value="Impatient">Impatient</option>
+                <option value="Greedy">Greedy</option>
+                <option value="Uncertain">Uncertain</option>
+              </select>
+            </div>
+            
+            {/* Post-Trade Emotion */}
+            <div>
+              <label htmlFor="postTradeEmotion" className="block text-sm font-medium text-gray-700 mb-1">
+                Post-Trade Emotion
+              </label>
+              <select
+                id="postTradeEmotion"
+                {...register('postTradeEmotion')}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select emotion</option>
+                <option value="Satisfied">Satisfied</option>
+                <option value="Disappointed">Disappointed</option>
+                <option value="Relieved">Relieved</option>
+                <option value="Frustrated">Frustrated</option>
+                <option value="Proud">Proud</option>
+                <option value="Regretful">Regretful</option>
+                <option value="Indifferent">Indifferent</option>
+                <option value="Excited">Excited</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            {/* Trade Confidence */}
+            <div>
+              <label htmlFor="tradeConfidence" className="block text-sm font-medium text-gray-700 mb-1">
+                Trade Confidence (1-10)
+              </label>
+              <input
+                type="number"
+                id="tradeConfidence"
+                min="1"
+                max="10"
+                {...register('tradeConfidence', { valueAsNumber: true })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            
+            {/* Trade Rating */}
+            <div>
+              <label htmlFor="tradeRating" className="block text-sm font-medium text-gray-700 mb-1">
+                Trade Execution Rating (1-10)
+              </label>
+              <input
+                type="number"
+                id="tradeRating"
+                min="1"
+                max="10"
+                {...register('tradeRating', { valueAsNumber: true })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Lessons Learned */}
+          <div className="mb-4">
+            <label htmlFor="lessons" className="block text-sm font-medium text-gray-700 mb-1">
+              Lessons Learned
+            </label>
+            <textarea
+              id="lessons"
+              rows={2}
+              {...register('lessons')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="What did you learn from this trade?"
+            ></textarea>
+          </div>
+          
+          {/* Trade Setup Screenshot */}
+          <div>
+            <label htmlFor="setupImageUrl" className="block text-sm font-medium text-gray-700 mb-1">
+              Trade Setup Screenshot URL
+            </label>
+            <input
+              type="text"
+              id="setupImageUrl"
+              {...register('setupImageUrl')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="mt-1 text-xs text-gray-500">Enter a URL to your chart screenshot</p>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3">
+          {editTrade.id !== null && (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
           <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            type="submit"
+            disabled={isSubmitting}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:bg-indigo-300"
           >
-            Cancel
+            {isSubmitting ? 'Saving...' : editTrade.id !== null ? 'Update Trade' : 'Add Trade'}
           </button>
-        )}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Saving...' : isEditing ? 'Update Trade' : 'Add Trade'}
-        </button>
-      </div>
-    </form>
+        </div>
+      </form>
+    </div>
   );
 }
