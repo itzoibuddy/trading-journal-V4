@@ -4,6 +4,13 @@ import { useState } from 'react';
 import Papa from 'papaparse';
 import { TradeFormData } from '../actions/trade';
 
+// Helper function for safe toISOString conversion
+function safeToISOString(date: any): string {
+  return typeof date === 'object' && date !== null && 'toISOString' in date
+    ? date.toISOString()
+    : date;
+}
+
 // Helper function to convert lots to quantity based on symbol
 const convertLotsToQuantity = (lots: number, symbol: string): number => {
   if (symbol === 'NIFTY') return lots * 75;
@@ -494,7 +501,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
           
           // Set entry date to the earliest LONG
           if (!currentSequence.entryDate || new Date(trade.entryDate) < new Date(currentSequence.entryDate)) {
-            currentSequence.entryDate = trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate;
+            currentSequence.entryDate = safeToISOString(trade.entryDate);
           }
         } else if (trade.type === 'SHORT') {
           // If this SHORT matches the current sequence's quantity
@@ -502,7 +509,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
             // Complete this sequence
             currentSequence.short = trade;
             currentSequence.exitPrice = trade.entryPrice;
-            currentSequence.exitDate = trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate;
+            currentSequence.exitDate = safeToISOString(trade.entryDate);
             currentSequence.profitLoss = (trade.entryPrice - currentSequence.avgEntryPrice) * currentSequence.totalQty;
             
             tradeSequences.push({...currentSequence});
@@ -545,7 +552,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
             exitPrice: sequence.exitPrice,
             quantity: sequence.totalQty,
             strikePrice: firstLong.strikePrice,
-            expiryDate: firstLong.expiryDate instanceof Date ? firstLong.expiryDate.toISOString() : firstLong.expiryDate,
+            expiryDate: safeToISOString(firstLong.expiryDate),
             optionType: firstLong.optionType,
             entryDate: sequence.entryDate,
             exitDate: sequence.exitDate,

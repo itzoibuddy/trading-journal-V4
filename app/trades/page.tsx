@@ -10,6 +10,13 @@ import TradeTable from '../components/TradeTable';
 import CSVImport from '../components/CSVImport';
 import TradeSummary from '../components/TradeSummary';
 
+// Helper function to safely convert to ISO string
+function safeToISOString(date: any): string {
+  return typeof date === 'object' && date !== null && 'toISOString' in date
+    ? date.toISOString()
+    : date;
+}
+
 // Helper function to format currency with 2 decimal places
 function formatCurrency(value: number | null | undefined): string {
   if (value === null || value === undefined) return '-';
@@ -20,7 +27,7 @@ function formatCurrency(value: number | null | undefined): string {
 function convertDatesToISOString(obj: any) {
   console.log('Converting dates for object:', JSON.stringify(obj, (key, value) => {
     // Custom serializer to identify Date objects
-    if (value instanceof Date) {
+    if (typeof value === 'object' && value !== null && 'toISOString' in value) {
       return `[Date: ${value.toISOString()}]`;
     }
     return value;
@@ -28,13 +35,8 @@ function convertDatesToISOString(obj: any) {
   
   const result = { ...obj };
   ['entryDate', 'exitDate', 'expiryDate'].forEach((key) => {
-    if (result[key] instanceof Date) {
-      console.log(`Converting ${key} from Date to ISO string`);
-      result[key] = result[key].toISOString();
-    } else if (result[key] && typeof result[key] === 'object' && 'toISOString' in result[key]) {
-      // Handle Date-like objects
-      console.log(`Converting ${key} from Date-like object to ISO string`);
-      result[key] = result[key].toISOString();
+    if (result[key]) {
+      result[key] = safeToISOString(result[key]);
     }
   });
   
@@ -123,9 +125,9 @@ export default function TradesPage() {
     // Ensure dates are formatted as strings for the form
     const formattedTrade = {
       ...trade,
-      entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
-      exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
-      expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
+      entryDate: safeToISOString(trade.entryDate),
+      exitDate: safeToISOString(trade.exitDate),
+      expiryDate: safeToISOString(trade.expiryDate),
     };
     
     setEditTrade({
