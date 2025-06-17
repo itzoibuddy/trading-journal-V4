@@ -59,7 +59,7 @@ const getLotSize = (symbol: string): number => {
 };
 
 interface TradeFormProps {
-  initialData?: (TradeFormData & { id: number }) | undefined;
+  initialData?: (TradeFormData & { id?: number }) | undefined;
   onSuccess: () => void;
   onCancel: () => void;
 }
