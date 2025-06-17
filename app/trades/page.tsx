@@ -10,6 +10,12 @@ import TradeTable from '../components/TradeTable';
 import CSVImport from '../components/CSVImport';
 import TradeSummary from '../components/TradeSummary';
 
+// Helper function to format currency with 2 decimal places
+function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '-';
+  return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 // Improved helper function with debug logging
 function convertDatesToISOString(obj: any) {
   console.log('Converting dates for object:', JSON.stringify(obj, (key, value) => {
@@ -42,7 +48,7 @@ export default function TradesPage() {
   const [error, setError] = useState<string | null>(null);
   const [editTrade, setEditTrade] = useState<{
     index: number | null;
-    id: string | null;
+    id: number | null;
     data?: TradeFormData;
   }>({
     index: null,
@@ -74,11 +80,11 @@ export default function TradesPage() {
     loadTrades();
   }, []);
 
-  const handleSubmitTrade = async () => {
+  const handleSubmitTrade = async (data: TradeFormData) => {
     try {
-      if (editTrade.id !== null && editTrade.data) {
+      if (editTrade.id !== null) {
         // Edit existing trade
-        await updateTrade(Number(editTrade.id), convertDatesToISOString(editTrade.data));
+        await updateTrade(Number(editTrade.id), convertDatesToISOString(data));
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => convertDatesToISOString({
           ...trade,
@@ -89,9 +95,9 @@ export default function TradesPage() {
           index: null,
           id: null
         });
-      } else if (editTrade.data) {
+      } else {
         // Add new trade
-        await createTrade(convertDatesToISOString(editTrade.data));
+        await createTrade(convertDatesToISOString(data));
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => convertDatesToISOString({
           ...trade,
@@ -107,10 +113,25 @@ export default function TradesPage() {
 
   const handleEditTrade = (index: number) => {
     const trade = trades[index];
+    if (!trade || !trade.id) {
+      console.error("Cannot edit trade: Invalid trade or missing ID", trade);
+      return;
+    }
+    
+    console.log("Editing trade:", trade);
+    
+    // Ensure dates are formatted as strings for the form
+    const formattedTrade = {
+      ...trade,
+      entryDate: trade.entryDate instanceof Date ? trade.entryDate.toISOString() : trade.entryDate,
+      exitDate: trade.exitDate instanceof Date ? trade.exitDate.toISOString() : trade.exitDate,
+      expiryDate: trade.expiryDate instanceof Date ? trade.expiryDate.toISOString() : trade.expiryDate,
+    };
+    
     setEditTrade({
       index,
-      id: trade.id?.toString() || null,
-      data: trade as TradeFormData
+      id: trade.id,
+      data: formattedTrade as TradeFormData
     });
   };
 
@@ -143,7 +164,7 @@ export default function TradesPage() {
     setShowTradeDetails(false);
   };
 
-  const handleImportTrades = async (importedTrades: any[]) => {
+  const handleImportTrades = async (importedTrades: TradeFormData[]) => {
     try {
       // Import each trade
       for (const trade of importedTrades) {
@@ -202,12 +223,28 @@ export default function TradesPage() {
 
       {/* Trade form section */}
       <TradeForm 
-        initialData={editTrade.data ? { 
-          ...editTrade.data, 
-          id: editTrade.id ? Number(editTrade.id) : undefined 
-        } : undefined}
-        onSuccess={handleSubmitTrade}
-        onCancel={handleCancelEdit}
+        initialData={editTrade.data && editTrade.id ? {...editTrade.data, id: editTrade.id} : undefined}
+        onSuccess={() => {
+          // This function will be called after form submission
+          console.log("TradeForm success callback triggered");
+          // Refresh trades list
+          getTrades().then(updatedTrades => {
+            setTrades(updatedTrades.map(trade => convertDatesToISOString({
+              ...trade,
+              type: trade.type as 'LONG' | 'SHORT',
+              instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
+            })));
+            
+            // Reset edit state
+            setEditTrade({
+              index: null,
+              id: null
+            });
+          }).catch(err => {
+            console.error("Error refreshing trades after form submission:", err);
+          });
+        }}
+        onCancel={handleCancelEdit} 
       />
 
       {/* Trade table section */}
@@ -298,13 +335,13 @@ export default function TradesPage() {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Entry Price</p>
-                      <p className="font-medium">₹{trades[selectedTradeIndex].entryPrice.toLocaleString('en-IN')}</p>
+                      <p className="font-medium">₹{formatCurrency(trades[selectedTradeIndex].entryPrice)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Exit Price</p>
                       <p className="font-medium">
                         {trades[selectedTradeIndex].exitPrice 
-                          ? `₹${trades[selectedTradeIndex].exitPrice.toLocaleString('en-IN')}` 
+                          ? `₹${formatCurrency(trades[selectedTradeIndex].exitPrice)}` 
                           : '-'}
                       </p>
                     </div>
@@ -316,7 +353,7 @@ export default function TradesPage() {
                       <p className="text-xs text-gray-500">Profit/Loss</p>
                       <p className={`font-medium ${trades[selectedTradeIndex].profitLoss && trades[selectedTradeIndex].profitLoss > 0 ? 'text-green-700' : 'text-red-700'}`}>
                         {trades[selectedTradeIndex].profitLoss 
-                          ? `${trades[selectedTradeIndex].profitLoss > 0 ? '+' : ''}₹${trades[selectedTradeIndex].profitLoss.toLocaleString('en-IN')}` 
+                          ? `${trades[selectedTradeIndex].profitLoss > 0 ? '+' : ''}₹${formatCurrency(trades[selectedTradeIndex].profitLoss)}` 
                           : '-'}
                       </p>
                     </div>
@@ -334,7 +371,7 @@ export default function TradesPage() {
                         <p className="text-xs text-gray-500">Stop Loss</p>
                         <p className="font-medium">
                           {trades[selectedTradeIndex].stopLoss 
-                            ? `₹${trades[selectedTradeIndex].stopLoss.toLocaleString('en-IN')}` 
+                            ? `₹${formatCurrency(trades[selectedTradeIndex].stopLoss)}` 
                             : '-'}
                         </p>
                       </div>
@@ -342,7 +379,7 @@ export default function TradesPage() {
                         <p className="text-xs text-gray-500">Target Price</p>
                         <p className="font-medium">
                           {trades[selectedTradeIndex].targetPrice 
-                            ? `₹${trades[selectedTradeIndex].targetPrice.toLocaleString('en-IN')}` 
+                            ? `₹${formatCurrency(trades[selectedTradeIndex].targetPrice)}` 
                             : '-'}
                         </p>
                       </div>

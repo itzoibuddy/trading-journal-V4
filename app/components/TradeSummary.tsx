@@ -72,6 +72,12 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
   const longPL = longTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
   const shortPL = shortTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
   
+  // Helper function to format currency with 2 decimal places
+  const formatCurrency = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return '-';
+    return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  
   return (
     <div className="bg-white shadow rounded-xl p-6">
       <div className="flex justify-between items-center mb-6">
@@ -110,7 +116,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
         <div className="bg-gray-50 rounded-lg p-4">
           <p className="text-sm text-gray-500 mb-1">Total P&L</p>
           <p className={`text-2xl font-bold ${totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {totalPL >= 0 ? '+' : ''}₹{totalPL.toLocaleString('en-IN')}
+            {totalPL >= 0 ? '+' : ''}₹{formatCurrency(totalPL)}
           </p>
         </div>
         
@@ -132,7 +138,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
             {profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)}
           </p>
           <p className="text-xs text-gray-500 mt-1">
-            Win ₹{avgWinAmount.toLocaleString('en-IN')} / Loss ₹{avgLossAmount.toLocaleString('en-IN')}
+            Win ₹{formatCurrency(avgWinAmount)} / Loss ₹{formatCurrency(avgLossAmount)}
           </p>
         </div>
         
@@ -157,7 +163,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
               <div className="flex justify-between mb-1">
                 <p className="text-sm">Stocks ({stockTrades.length})</p>
                 <p className={`text-sm font-medium ${stockPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stockPL >= 0 ? '+' : ''}₹{stockPL.toLocaleString('en-IN')}
+                  {stockPL >= 0 ? '+' : ''}₹{formatCurrency(stockPL)}
                 </p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -172,7 +178,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
               <div className="flex justify-between mb-1">
                 <p className="text-sm">Futures ({futuresTrades.length})</p>
                 <p className={`text-sm font-medium ${futuresPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {futuresPL >= 0 ? '+' : ''}₹{futuresPL.toLocaleString('en-IN')}
+                  {futuresPL >= 0 ? '+' : ''}₹{formatCurrency(futuresPL)}
                 </p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -187,7 +193,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
               <div className="flex justify-between mb-1">
                 <p className="text-sm">Options ({optionsTrades.length})</p>
                 <p className={`text-sm font-medium ${optionsPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {optionsPL >= 0 ? '+' : ''}₹{optionsPL.toLocaleString('en-IN')}
+                  {optionsPL >= 0 ? '+' : ''}₹{formatCurrency(optionsPL)}
                 </p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -209,7 +215,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
               <div className="flex justify-between mb-1">
                 <p className="text-sm">Long ({longTrades.length})</p>
                 <p className={`text-sm font-medium ${longPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {longPL >= 0 ? '+' : ''}₹{longPL.toLocaleString('en-IN')}
+                  {longPL >= 0 ? '+' : ''}₹{formatCurrency(longPL)}
                 </p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -224,7 +230,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
               <div className="flex justify-between mb-1">
                 <p className="text-sm">Short ({shortTrades.length})</p>
                 <p className={`text-sm font-medium ${shortPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {shortPL >= 0 ? '+' : ''}₹{shortPL.toLocaleString('en-IN')}
+                  {shortPL >= 0 ? '+' : ''}₹{formatCurrency(shortPL)}
                 </p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -239,7 +245,7 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
             <div className="mt-6">
               <h4 className="text-sm font-medium text-gray-700 mb-1">Average Trade</h4>
               <p className={`text-xl font-bold ${avgPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {avgPL >= 0 ? '+' : ''}₹{avgPL.toLocaleString('en-IN')}
+                {avgPL >= 0 ? '+' : ''}₹{formatCurrency(avgPL)}
               </p>
               <p className="text-xs text-gray-500 mt-1">Per completed trade</p>
             </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Papa from 'papaparse';
-import { TradeFormData } from '../types/Trade';
+import { TradeFormData } from '../actions/trade';
 
 // Helper function to convert lots to quantity based on symbol
 const convertLotsToQuantity = (lots: number, symbol: string): number => {

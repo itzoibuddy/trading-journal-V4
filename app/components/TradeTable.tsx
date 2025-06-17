@@ -20,6 +20,12 @@ const formatQuantityAsLots = (quantity: number, symbol: string): string => {
   return `${quantity} (${lots} lots)`;
 };
 
+// Helper function to format currency with 2 decimal places
+const formatCurrency = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '-';
+  return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
 // Icon for trade type (LONG/SHORT)
 const tradeTypeIcon = (type: 'LONG' | 'SHORT') =>
   type === 'LONG' ? (
@@ -393,12 +399,12 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails }: 
                       )}
                       {visibleColumns.entryPrice && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          ₹{trade.entryPrice.toLocaleString('en-IN')}
+                          ₹{formatCurrency(trade.entryPrice)}
                         </td>
                       )}
                       {visibleColumns.exitPrice && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {trade.exitPrice ? `₹${trade.exitPrice.toLocaleString('en-IN')}` : '-'}
+                          {trade.exitPrice ? `₹${formatCurrency(trade.exitPrice)}` : '-'}
                         </td>
                       )}
                       {visibleColumns.quantity && (
@@ -409,14 +415,14 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails }: 
                       {visibleColumns.strikePrice && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {trade.instrumentType === 'OPTIONS' && trade.strikePrice ? 
-                            <span className="font-semibold text-indigo-700">₹{trade.strikePrice.toLocaleString('en-IN')}</span> : '-'}
+                            <span className="font-semibold text-indigo-700">₹{formatCurrency(trade.strikePrice)}</span> : '-'}
                         </td>
                       )}
                       {visibleColumns.profitLoss && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                           {trade.profitLoss ? (
                             <span className={trade.profitLoss > 0 ? 'text-green-700' : 'text-red-700'}>
-                              {trade.profitLoss > 0 ? '+' : ''}₹{trade.profitLoss.toLocaleString('en-IN')}
+                              {trade.profitLoss > 0 ? '+' : ''}₹{formatCurrency(trade.profitLoss)}
                             </span>
                           ) : '-'}
                         </td>

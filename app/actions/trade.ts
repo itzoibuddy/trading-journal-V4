@@ -61,6 +61,12 @@ export async function getTradesByDate(date: Date) {
   });
 }
 
+// Helper function to format decimal values to 2 decimal places
+const formatDecimal = (value: number | null | undefined): number | null => {
+  if (value === null || value === undefined) return null;
+  return parseFloat(value.toFixed(2));
+};
+
 export async function createTrade(data: TradeFormData) {
   const validatedData = tradeSchema.parse(data);
   
@@ -69,16 +75,16 @@ export async function createTrade(data: TradeFormData) {
       symbol: validatedData.symbol,
       type: validatedData.type,
       instrumentType: validatedData.instrumentType,
-      entryPrice: validatedData.entryPrice,
-      exitPrice: validatedData.exitPrice || null,
+      entryPrice: formatDecimal(validatedData.entryPrice)!,
+      exitPrice: formatDecimal(validatedData.exitPrice),
       quantity: validatedData.quantity,
-      strikePrice: validatedData.strikePrice || null,
+      strikePrice: formatDecimal(validatedData.strikePrice),
       expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : null,
       optionType: validatedData.optionType || null,
-      premium: validatedData.premium || null,
+      premium: formatDecimal(validatedData.premium),
       entryDate: new Date(validatedData.entryDate),
       exitDate: validatedData.exitDate ? new Date(validatedData.exitDate) : null,
-      profitLoss: validatedData.profitLoss || null,
+      profitLoss: formatDecimal(validatedData.profitLoss),
       notes: validatedData.notes || null,
       sector: validatedData.sector || null,
       strategy: validatedData.strategy || null,
@@ -88,9 +94,9 @@ export async function createTrade(data: TradeFormData) {
       tradeConfidence: validatedData.tradeConfidence || null,
       tradeRating: validatedData.tradeRating || null,
       lessons: validatedData.lessons || null,
-      riskRewardRatio: validatedData.riskRewardRatio || null,
-      stopLoss: validatedData.stopLoss || null,
-      targetPrice: validatedData.targetPrice || null,
+      riskRewardRatio: formatDecimal(validatedData.riskRewardRatio),
+      stopLoss: formatDecimal(validatedData.stopLoss),
+      targetPrice: formatDecimal(validatedData.targetPrice),
       timeFrame: validatedData.timeFrame || null,
       marketCondition: validatedData.marketCondition || null,
     },
@@ -114,16 +120,16 @@ export async function updateTrade(id: number, data: TradeFormData) {
       symbol: validatedData.symbol,
       type: validatedData.type,
       instrumentType: validatedData.instrumentType,
-      entryPrice: validatedData.entryPrice,
-      exitPrice: validatedData.exitPrice || null,
+      entryPrice: formatDecimal(validatedData.entryPrice)!,
+      exitPrice: formatDecimal(validatedData.exitPrice),
       quantity: validatedData.quantity,
-      strikePrice: validatedData.strikePrice || null,
+      strikePrice: formatDecimal(validatedData.strikePrice),
       expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : null,
       optionType: validatedData.optionType || null,
-      premium: validatedData.premium || null,
+      premium: formatDecimal(validatedData.premium),
       entryDate: new Date(validatedData.entryDate),
       exitDate: validatedData.exitDate ? new Date(validatedData.exitDate) : null,
-      profitLoss: validatedData.profitLoss || null,
+      profitLoss: formatDecimal(validatedData.profitLoss),
       notes: validatedData.notes || null,
       sector: validatedData.sector || null,
       strategy: validatedData.strategy || null,
@@ -133,9 +139,9 @@ export async function updateTrade(id: number, data: TradeFormData) {
       tradeConfidence: validatedData.tradeConfidence || null,
       tradeRating: validatedData.tradeRating || null,
       lessons: validatedData.lessons || null,
-      riskRewardRatio: validatedData.riskRewardRatio || null,
-      stopLoss: validatedData.stopLoss || null,
-      targetPrice: validatedData.targetPrice || null,
+      riskRewardRatio: formatDecimal(validatedData.riskRewardRatio),
+      stopLoss: formatDecimal(validatedData.stopLoss),
+      targetPrice: formatDecimal(validatedData.targetPrice),
       timeFrame: validatedData.timeFrame || null,
       marketCondition: validatedData.marketCondition || null,
     },
