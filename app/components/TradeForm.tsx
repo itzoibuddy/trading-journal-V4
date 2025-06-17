@@ -136,7 +136,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
   // Set form values when editing
   useEffect(() => {
-    if (initialData && initialData.id) {
+    if (initialData) {
       const trade = initialData;
       
       // Check if this is likely a lot-based quantity for NIFTY or SENSEX
@@ -203,7 +203,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
   const handleFormSubmit = async (data: TradeFormData & { id?: number }) => {
     const { id, ...formDataWithoutId } = data;
-    if (id) {
+    if (id !== undefined) {
       await updateTrade(id, formDataWithoutId);
     } else {
       await createTrade(formDataWithoutId);
@@ -213,7 +213,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
   return (
     <div className="bg-white shadow rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">{initialData?.id ? 'Edit Trade' : 'Add New Trade'}</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">{initialData?.id !== undefined ? 'Edit Trade' : 'Add New Trade'}</h3>
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Basic Trade Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -717,7 +717,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
             disabled={isSubmitting}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:bg-indigo-300"
           >
-            {isSubmitting ? 'Saving...' : initialData?.id ? 'Update Trade' : 'Add Trade'}
+            {isSubmitting ? 'Saving...' : initialData?.id !== undefined ? 'Update Trade' : 'Add Trade'}
           </button>
         </div>
       </form>

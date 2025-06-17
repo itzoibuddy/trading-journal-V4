@@ -7,7 +7,7 @@ import { TradeFormData } from '../actions/trade';
 type TradeModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  initialData?: TradeFormData & { id?: number };
+  initialData?: (TradeFormData & { id?: number }) | undefined;
   title: string;
 };
 
