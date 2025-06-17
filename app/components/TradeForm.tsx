@@ -5,6 +5,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TradeFormData } from '../types/Trade';
+import { createTrade, updateTrade } from '../actions/trade';
+import DOMPurify from 'dompurify';
+import {
+  InstrumentType,
+  TradeType,
+  OptionType,
+  LOT_SIZES,
+  TIME_FRAMES,
+  MARKET_CONDITIONS,
+  PRE_TRADE_EMOTIONS,
+  POST_TRADE_EMOTIONS,
+  DEFAULT_TRADE_FORM_VALUES
+} from '../config/constants';
 
 const tradeSchema = z.object({
   symbol: z.string().min(1, 'Symbol is required'),
@@ -50,17 +63,13 @@ const getLotSize = (symbol: string): number => {
 };
 
 interface TradeFormProps {
-  onSubmit: (data: TradeFormData) => Promise<void>;
-  editTrade: {
-    index: number | null;
-    id: string | null;
-    data?: TradeFormData;
-  };
-  onCancelEdit: () => void;
+  initialData?: TradeFormData & { id?: number };
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
-export default function TradeForm({ onSubmit, editTrade, onCancelEdit }: TradeFormProps) {
-  const [selectedInstrumentType, setSelectedInstrumentType] = useState<string>("STOCK");
+export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFormProps) {
+  const [selectedInstrumentType, setSelectedInstrumentType] = useState<string>(initialData?.instrumentType || 'STOCK');
   const [inputAsLots, setInputAsLots] = useState<boolean>(false);
 
   const {
@@ -128,66 +137,100 @@ export default function TradeForm({ onSubmit, editTrade, onCancelEdit }: TradeFo
 
   // Set form values when editing
   useEffect(() => {
-    if (editTrade.id !== null && editTrade.data) {
-      const trade = editTrade.data;
+    if (initialData && initialData.id) {
+      const trade = initialData;
       
       // Check if this is likely a lot-based quantity for NIFTY or SENSEX
       const symbol = trade.symbol.toUpperCase();
       const lotSize = getLotSize(symbol);
       const isLotBased = (symbol === 'NIFTY' || symbol === 'SENSEX') && 
-                          trade.quantity && (trade.quantity % lotSize === 0);
+                        trade.quantity && (trade.quantity % lotSize === 0);
       
       // Set the inputAsLots state based on the trade
-      setInputAsLots(isLotBased);
+      setInputAsLots(Boolean(isLotBased));
       
+      // Format dates properly for the datetime-local inputs
+      const formatDateForInput = (dateValue: string | Date | null | undefined) => {
+        if (!dateValue) return '';
+        // Make sure we have a proper ISO string (YYYY-MM-DDTHH:MM)
+        const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+        return date.toISOString().slice(0, 16);
+      };
+
       // Set form values - basic fields
       setValue('symbol', trade.symbol);
       setValue('type', trade.type);
       setValue('instrumentType', trade.instrumentType || 'STOCK');
       setValue('entryPrice', trade.entryPrice);
-      setValue('exitPrice', trade.exitPrice || undefined);
+      setValue('exitPrice', trade.exitPrice || null);
       setValue('quantity', trade.quantity);
-      setValue('entryDate', trade.entryDate);
-      setValue('exitDate', trade.exitDate || undefined);
-      setValue('profitLoss', trade.profitLoss || undefined);
+      setValue('entryDate', formatDateForInput(trade.entryDate));
+      setValue('exitDate', formatDateForInput(trade.exitDate));
+      setValue('profitLoss', trade.profitLoss || null);
       setValue('notes', trade.notes || '');
       setValue('sector', trade.sector || '');
       
       // Set options/futures specific fields
       if (trade.instrumentType === 'OPTIONS') {
-        setValue('strikePrice', trade.strikePrice || undefined);
-        setValue('expiryDate', trade.expiryDate || undefined);
-        setValue('optionType', trade.optionType || undefined);
+        setValue('strikePrice', trade.strikePrice || null);
+        setValue('expiryDate', formatDateForInput(trade.expiryDate));
+        setValue('optionType', trade.optionType || null);
       } else if (trade.instrumentType === 'FUTURES') {
-        setValue('expiryDate', trade.expiryDate || undefined);
+        setValue('expiryDate', formatDateForInput(trade.expiryDate));
       }
       
       // Set advanced trade journal fields
       setValue('strategy', trade.strategy || '');
       setValue('timeFrame', trade.timeFrame || '');
       setValue('marketCondition', trade.marketCondition || '');
-      setValue('stopLoss', trade.stopLoss || undefined);
-      setValue('targetPrice', trade.targetPrice || undefined);
-      setValue('riskRewardRatio', trade.riskRewardRatio || undefined);
+      setValue('stopLoss', trade.stopLoss || null);
+      setValue('targetPrice', trade.targetPrice || null);
+      setValue('riskRewardRatio', trade.riskRewardRatio || null);
       setValue('preTradeEmotion', trade.preTradeEmotion || '');
       setValue('postTradeEmotion', trade.postTradeEmotion || '');
-      setValue('tradeConfidence', trade.tradeConfidence || undefined);
-      setValue('tradeRating', trade.tradeRating || undefined);
+      setValue('tradeConfidence', trade.tradeConfidence || null);
+      setValue('tradeRating', trade.tradeRating || null);
       setValue('lessons', trade.lessons || '');
       setValue('setupImageUrl', trade.setupImageUrl || '');
       
       setSelectedInstrumentType(trade.instrumentType || 'STOCK');
     }
-  }, [editTrade, setValue]);
+  }, [initialData, setValue]);
 
   const handleFormSubmit = async (data: TradeFormData) => {
-    await onSubmit(data);
-    reset();
+    // Sanitize text inputs to prevent XSS attacks
+    const sanitizedData = {
+      ...data,
+      symbol: DOMPurify.sanitize(data.symbol),
+      notes: data.notes ? DOMPurify.sanitize(data.notes) : data.notes,
+      sector: data.sector ? DOMPurify.sanitize(data.sector) : data.sector,
+      strategy: data.strategy ? DOMPurify.sanitize(data.strategy) : data.strategy,
+      lessons: data.lessons ? DOMPurify.sanitize(data.lessons) : data.lessons,
+      setupImageUrl: data.setupImageUrl ? DOMPurify.sanitize(data.setupImageUrl) : data.setupImageUrl,
+      // Ensure dates are properly formatted as strings
+      entryDate: typeof data.entryDate === 'string' ? data.entryDate : new Date(data.entryDate).toISOString(),
+      exitDate: data.exitDate ? (typeof data.exitDate === 'string' ? data.exitDate : new Date(data.exitDate).toISOString()) : null,
+      expiryDate: data.expiryDate ? (typeof data.expiryDate === 'string' ? data.expiryDate : new Date(data.expiryDate).toISOString()) : null,
+    };
+    
+    try {
+      if (initialData && initialData.id) {
+        // Update existing trade
+        await updateTrade(initialData.id, sanitizedData);
+      } else {
+        // Create new trade
+        await createTrade(sanitizedData);
+      }
+      onSuccess();
+      reset();
+    } catch (error) {
+      console.error('Error saving trade:', error);
+    }
   };
 
   return (
     <div className="bg-white shadow rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">{editTrade.id !== null ? 'Edit Trade' : 'Add New Trade'}</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">{initialData?.id ? 'Edit Trade' : 'Add New Trade'}</h3>
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Instrument Type */}
@@ -665,21 +708,19 @@ export default function TradeForm({ onSubmit, editTrade, onCancelEdit }: TradeFo
         </div>
 
         <div className="flex justify-end gap-3">
-          {editTrade.id !== null && (
-            <button
-              type="button"
-              onClick={onCancelEdit}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={isSubmitting}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:bg-indigo-300"
           >
-            {isSubmitting ? 'Saving...' : editTrade.id !== null ? 'Update Trade' : 'Add Trade'}
+            {isSubmitting ? 'Saving...' : initialData?.id ? 'Update Trade' : 'Add Trade'}
           </button>
         </div>
       </form>
