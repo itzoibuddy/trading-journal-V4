@@ -59,6 +59,7 @@ export default function TradesPage() {
   const [showTradeDetails, setShowTradeDetails] = useState<boolean>(false);
   const [selectedTradeIndex, setSelectedTradeIndex] = useState<number | null>(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadTrades() {
@@ -106,6 +107,7 @@ export default function TradesPage() {
           type: trade.type as 'LONG' | 'SHORT',
           instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
         })));
+        setShowAddForm(false);
       }
     } catch (err) {
       setError('Failed to save trade. Please try again.');
@@ -135,6 +137,7 @@ export default function TradesPage() {
       id: trade.id,
       data: formattedTrade as TradeFormData
     });
+    setShowAddForm(true);
   };
 
   const handleCancelEdit = () => {
@@ -142,6 +145,7 @@ export default function TradesPage() {
       index: null,
       id: null
     });
+    setShowAddForm(false);
   };
 
   const handleDeleteTrade = async (index: number) => {
@@ -194,269 +198,379 @@ export default function TradesPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Trades</h2>
-        <CSVImport onImport={handleImportTrades} />
-      </div>
-
-      {importMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">{importMessage}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <span className="block sm:inline">{error}</span>
-          <button
-            className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            onClick={() => setError(null)}
-          >
-            <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {/* Trade summary section */}
-      <TradeSummary trades={trades} />
-
-      {/* Trade form section */}
-      <TradeForm 
-        initialData={editTrade.data && editTrade.id ? {...editTrade.data, id: editTrade.id} : undefined}
-        onSuccess={() => {
-          // This function will be called after form submission
-          console.log("TradeForm success callback triggered");
-          // Refresh trades list
-          getTrades().then(updatedTrades => {
-            setTrades(updatedTrades.map(trade => convertDatesToISOString({
-              ...trade,
-              type: trade.type as 'LONG' | 'SHORT',
-              instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
-            })));
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Trading Journal</h1>
+              <p className="text-gray-600">Track, analyze, and improve your trading performance</p>
+            </div>
             
-            // Reset edit state
-            setEditTrade({
-              index: null,
-              id: null
-            });
-          }).catch(err => {
-            console.error("Error refreshing trades after form submission:", err);
-          });
-        }}
-        onCancel={handleCancelEdit} 
-      />
+            <div className="flex flex-col sm:flex-row gap-3">
+              <CSVImport onImport={handleImportTrades} />
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add New Trade
+              </button>
+            </div>
+          </div>
+        </div>
 
-      {/* Trade table section */}
-      {isLoading ? (
-        <div className="text-center py-4">Loading trades...</div>
-      ) : (
-        <TradeTable 
-          trades={trades}
-          onEdit={handleEditTrade}
-          onDelete={handleDeleteTrade}
-          onViewDetails={handleViewTradeDetails}
-        />
-      )}
-      
-      {/* Trade Details Modal */}
-      {showTradeDetails && selectedTradeIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Trade Details: {trades[selectedTradeIndex].symbol}
-                </h3>
-                <button
-                  onClick={handleCloseTradeDetails}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        {/* Alert Messages */}
+        {importMessage && (
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium">{importMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg shadow-sm relative">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-red-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium">{error}</span>
+            </div>
+            <button
+              className="absolute top-2 right-2 p-2 hover:bg-red-100 rounded-lg transition-colors"
+              onClick={() => setError(null)}
+            >
+              <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {/* Trade Summary Section */}
+        <div className="mb-8">
+          <TradeSummary trades={trades} />
+        </div>
+
+        {/* Add/Edit Trade Form Modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {editTrade.id ? 'Edit Trade' : 'Add New Trade'}
+                  </h3>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               
-              <div className="grid grid-cols-1 gap-6">
+              <div className="p-6">
+                <TradeForm 
+                  initialData={editTrade.data && editTrade.id ? {...editTrade.data, id: editTrade.id} : undefined}
+                  onSuccess={() => {
+                    // This function will be called after form submission
+                    console.log("TradeForm success callback triggered");
+                    // Refresh trades list
+                    getTrades().then(updatedTrades => {
+                      setTrades(updatedTrades.map(trade => convertDatesToISOString({
+                        ...trade,
+                        type: trade.type as 'LONG' | 'SHORT',
+                        instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
+                      })));
+                      
+                      // Reset edit state
+                      setEditTrade({
+                        index: null,
+                        id: null
+                      });
+                      setShowAddForm(false);
+                    }).catch(err => {
+                      console.error("Error refreshing trades after form submission:", err);
+                    });
+                  }}
+                  onCancel={handleCancelEdit} 
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Trade table section */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 font-medium">Loading your trades...</p>
+              </div>
+            </div>
+          ) : (
+            <TradeTable 
+              trades={trades}
+              onEdit={handleEditTrade}
+              onDelete={handleDeleteTrade}
+              onViewDetails={handleViewTradeDetails}
+            />
+          )}
+        </div>
+        
+        {/* Trade Details Modal */}
+        {showTradeDetails && selectedTradeIndex !== null && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                      <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        Trade Details: {trades[selectedTradeIndex].symbol}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {trades[selectedTradeIndex].type} • {trades[selectedTradeIndex].instrumentType}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCloseTradeDetails}
+                    className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-6">
                 {/* Trade Setup Screenshot */}
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl p-6">
                   {trades[selectedTradeIndex].setupImageUrl ? (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Trade Setup</h4>
+                      <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg className="h-5 w-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Trade Setup
+                      </h4>
                       <img 
                         src={trades[selectedTradeIndex].setupImageUrl} 
                         alt="Trade Setup" 
-                        className="w-full rounded-lg border border-gray-200"
+                        className="w-full rounded-xl border-2 border-gray-200 shadow-lg"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x800?text=Image+Not+Found';
                         }}
                       />
                     </div>
                   ) : (
-                    <div className="h-64 flex items-center justify-center text-gray-400 border border-dashed border-gray-300 rounded-lg">
-                      No screenshot available
+                    <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded-xl">
+                      <div className="text-center">
+                        <svg className="h-12 w-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="font-medium">No screenshot available</p>
+                      </div>
                     </div>
                   )}
                 </div>
                 
                 {/* Trade Information */}
-                <div className="bg-white rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Trade Information</h4>
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg className="h-5 w-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Trade Information
+                  </h4>
                   
-                  <div className="grid grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-xs text-gray-500">Symbol</p>
-                      <p className="font-medium">{trades[selectedTradeIndex].symbol}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Symbol</p>
+                      <p className="font-bold text-lg text-gray-900">{trades[selectedTradeIndex].symbol}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Type</p>
-                      <p className={`font-medium ${trades[selectedTradeIndex].type === 'LONG' ? 'text-green-700' : 'text-red-700'}`}>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Type</p>
+                      <p className={`font-bold text-lg ${trades[selectedTradeIndex].type === 'LONG' ? 'text-green-600' : 'text-red-600'}`}>
                         {trades[selectedTradeIndex].type}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Strategy</p>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Strategy</p>
                       {trades[selectedTradeIndex].strategy ? (
-                        <p className="font-medium">{trades[selectedTradeIndex].strategy}</p>
+                        <p className="font-bold text-lg text-gray-900">{trades[selectedTradeIndex].strategy}</p>
                       ) : (
                         <div className="flex items-center">
-                          <span className="text-gray-400">-</span>
-                          <svg className="h-5 w-5 text-red-500 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span className="text-xs text-red-500 ml-1">No setup</span>
+                          <span className="text-gray-400 font-medium">Not specified</span>
                         </div>
                       )}
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Time Frame</p>
-                      <p className="font-medium">{trades[selectedTradeIndex].timeFrame || '-'}</p>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Time Frame</p>
+                      <p className="font-bold text-lg text-gray-900">{trades[selectedTradeIndex].timeFrame || 'Not specified'}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Entry Price</p>
-                      <p className="font-medium">₹{formatCurrency(trades[selectedTradeIndex].entryPrice)}</p>
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <p className="text-xs text-blue-600 uppercase tracking-wide font-medium mb-1">Entry Price</p>
+                      <p className="font-bold text-lg text-blue-900">₹{formatCurrency(trades[selectedTradeIndex].entryPrice)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Exit Price</p>
-                      <p className="font-medium">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <p className="text-xs text-blue-600 uppercase tracking-wide font-medium mb-1">Exit Price</p>
+                      <p className="font-bold text-lg text-blue-900">
                         {trades[selectedTradeIndex].exitPrice 
                           ? `₹${formatCurrency(trades[selectedTradeIndex].exitPrice)}` 
-                          : '-'}
+                          : 'Not exited'}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Quantity</p>
-                      <p className="font-medium">{trades[selectedTradeIndex].quantity}</p>
+                    <div className="bg-indigo-50 rounded-lg p-4">
+                      <p className="text-xs text-indigo-600 uppercase tracking-wide font-medium mb-1">Quantity</p>
+                      <p className="font-bold text-lg text-indigo-900">{trades[selectedTradeIndex].quantity}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Profit/Loss</p>
-                      <p className={`font-medium ${trades[selectedTradeIndex].profitLoss && trades[selectedTradeIndex].profitLoss > 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    <div className={`rounded-lg p-4 ${trades[selectedTradeIndex].profitLoss && trades[selectedTradeIndex].profitLoss > 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                      <p className={`text-xs uppercase tracking-wide font-medium mb-1 ${trades[selectedTradeIndex].profitLoss && trades[selectedTradeIndex].profitLoss > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        Profit/Loss
+                      </p>
+                      <p className={`font-bold text-lg ${trades[selectedTradeIndex].profitLoss && trades[selectedTradeIndex].profitLoss > 0 ? 'text-green-700' : 'text-red-700'}`}>
                         {trades[selectedTradeIndex].profitLoss 
                           ? `${trades[selectedTradeIndex].profitLoss > 0 ? '+' : ''}₹${formatCurrency(trades[selectedTradeIndex].profitLoss)}` 
-                          : '-'}
+                          : 'Pending'}
                       </p>
                     </div>
                   </div>
+                </div>
+                
+                {/* Trade Analysis */}
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg className="h-5 w-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Trade Analysis
+                  </h4>
                   
-                  <div className="border-t border-gray-200 pt-4 mt-2">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Trade Analysis</h4>
-                    
-                    <div className="grid grid-cols-4 gap-4 mb-4">
-                      <div>
-                        <p className="text-xs text-gray-500">Risk-Reward Ratio</p>
-                        <p className="font-medium">{trades[selectedTradeIndex].riskRewardRatio || '-'}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="bg-purple-50 rounded-lg p-4">
+                      <p className="text-xs text-purple-600 uppercase tracking-wide font-medium mb-1">Risk-Reward</p>
+                      <p className="font-bold text-lg text-purple-900">{trades[selectedTradeIndex].riskRewardRatio || 'Not set'}</p>
+                    </div>
+                    <div className="bg-orange-50 rounded-lg p-4">
+                      <p className="text-xs text-orange-600 uppercase tracking-wide font-medium mb-1">Stop Loss</p>
+                      <p className="font-bold text-lg text-orange-900">
+                        {trades[selectedTradeIndex].stopLoss 
+                          ? `₹${formatCurrency(trades[selectedTradeIndex].stopLoss)}` 
+                          : 'Not set'}
+                      </p>
+                    </div>
+                    <div className="bg-teal-50 rounded-lg p-4">
+                      <p className="text-xs text-teal-600 uppercase tracking-wide font-medium mb-1">Target Price</p>
+                      <p className="font-bold text-lg text-teal-900">
+                        {trades[selectedTradeIndex].targetPrice 
+                          ? `₹${formatCurrency(trades[selectedTradeIndex].targetPrice)}` 
+                          : 'Not set'}
+                      </p>
+                    </div>
+                    <div className="bg-pink-50 rounded-lg p-4">
+                      <p className="text-xs text-pink-600 uppercase tracking-wide font-medium mb-1">Market Condition</p>
+                      <p className="font-bold text-lg text-pink-900">{trades[selectedTradeIndex].marketCondition || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-yellow-50 rounded-lg p-4">
+                      <p className="text-xs text-yellow-600 uppercase tracking-wide font-medium mb-1">Pre-Trade Emotion</p>
+                      <p className="font-bold text-lg text-yellow-900">{trades[selectedTradeIndex].preTradeEmotion || 'Not recorded'}</p>
+                    </div>
+                    <div className="bg-cyan-50 rounded-lg p-4">
+                      <p className="text-xs text-cyan-600 uppercase tracking-wide font-medium mb-1">Post-Trade Emotion</p>
+                      <p className="font-bold text-lg text-cyan-900">{trades[selectedTradeIndex].postTradeEmotion || 'Not recorded'}</p>
+                    </div>
+                    <div className="bg-emerald-50 rounded-lg p-4">
+                      <p className="text-xs text-emerald-600 uppercase tracking-wide font-medium mb-1">Confidence</p>
+                      <div className="flex items-center">
+                        {trades[selectedTradeIndex].tradeConfidence ? (
+                          <div className="flex items-center">
+                            <span className={`font-bold text-lg ${
+                              trades[selectedTradeIndex].tradeConfidence >= 8 ? 'text-green-700' : 
+                              trades[selectedTradeIndex].tradeConfidence >= 5 ? 'text-amber-600' : 
+                              'text-red-700'
+                            }`}>
+                              {trades[selectedTradeIndex].tradeConfidence}
+                            </span>
+                            <span className="ml-1 text-gray-400 text-sm">/10</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 font-medium">Not rated</span>
+                        )}
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Stop Loss</p>
-                        <p className="font-medium">
-                          {trades[selectedTradeIndex].stopLoss 
-                            ? `₹${formatCurrency(trades[selectedTradeIndex].stopLoss)}` 
-                            : '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Target Price</p>
-                        <p className="font-medium">
-                          {trades[selectedTradeIndex].targetPrice 
-                            ? `₹${formatCurrency(trades[selectedTradeIndex].targetPrice)}` 
-                            : '-'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Market Condition</p>
-                        <p className="font-medium">{trades[selectedTradeIndex].marketCondition || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Pre-Trade Emotion</p>
-                        <p className="font-medium">{trades[selectedTradeIndex].preTradeEmotion || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Post-Trade Emotion</p>
-                        <p className="font-medium">{trades[selectedTradeIndex].postTradeEmotion || '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Trade Confidence</p>
-                        <div className="flex items-center">
-                          {trades[selectedTradeIndex].tradeConfidence ? (
-                            <>
-                              <span className={`font-medium ${
-                                trades[selectedTradeIndex].tradeConfidence >= 8 ? 'text-green-700' : 
-                                trades[selectedTradeIndex].tradeConfidence >= 5 ? 'text-amber-600' : 
-                                'text-red-700'
-                              }`}>
-                                {trades[selectedTradeIndex].tradeConfidence}
-                              </span>
-                              <span className="ml-1 text-gray-400 text-xs">/10</span>
-                            </>
-                          ) : '-'}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Trade Rating</p>
-                        <div className="flex items-center">
-                          {trades[selectedTradeIndex].tradeRating ? (
-                            <>
-                              <span className={`font-medium ${
-                                trades[selectedTradeIndex].tradeRating >= 8 ? 'text-green-700' : 
-                                trades[selectedTradeIndex].tradeRating >= 5 ? 'text-amber-600' : 
-                                'text-red-700'
-                              }`}>
-                                {trades[selectedTradeIndex].tradeRating}
-                              </span>
-                              <span className="ml-1 text-gray-400 text-xs">/10</span>
-                            </>
-                          ) : '-'}
-                        </div>
+                    </div>
+                    <div className="bg-violet-50 rounded-lg p-4">
+                      <p className="text-xs text-violet-600 uppercase tracking-wide font-medium mb-1">Rating</p>
+                      <div className="flex items-center">
+                        {trades[selectedTradeIndex].tradeRating ? (
+                          <div className="flex items-center">
+                            <span className={`font-bold text-lg ${
+                              trades[selectedTradeIndex].tradeRating >= 8 ? 'text-green-700' : 
+                              trades[selectedTradeIndex].tradeRating >= 5 ? 'text-amber-600' : 
+                              'text-red-700'
+                            }`}>
+                              {trades[selectedTradeIndex].tradeRating}
+                            </span>
+                            <span className="ml-1 text-gray-400 text-sm">/10</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 font-medium">Not rated</span>
+                        )}
                       </div>
                     </div>
                   </div>
-                  
-                  {(trades[selectedTradeIndex].notes || trades[selectedTradeIndex].lessons) && (
-                    <div className="border-t border-gray-200 pt-4 mt-2">
+                </div>
+                
+                {/* Notes and Lessons */}
+                {(trades[selectedTradeIndex].notes || trades[selectedTradeIndex].lessons) && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-6">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <svg className="h-5 w-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Notes & Lessons
+                    </h4>
+                    
+                    <div className="space-y-4">
                       {trades[selectedTradeIndex].notes && (
-                        <div className="mb-3">
-                          <p className="text-xs text-gray-500 mb-1">Notes</p>
-                          <p className="text-sm">{trades[selectedTradeIndex].notes}</p>
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <p className="text-sm font-medium text-blue-800 mb-2">Trade Notes</p>
+                          <p className="text-gray-700 leading-relaxed">{trades[selectedTradeIndex].notes}</p>
                         </div>
                       )}
                       
                       {trades[selectedTradeIndex].lessons && (
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Lessons Learned</p>
-                          <p className="text-sm">{trades[selectedTradeIndex].lessons}</p>
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <p className="text-sm font-medium text-green-800 mb-2">Lessons Learned</p>
+                          <p className="text-gray-700 leading-relaxed">{trades[selectedTradeIndex].lessons}</p>
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 } 
