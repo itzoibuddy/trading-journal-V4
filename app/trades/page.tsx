@@ -3,8 +3,8 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from 'react';
-import { getTrades, createTrade, updateTrade, deleteTrade } from '../actions/trade';
-import { Trade, TradeFormData } from '../types/Trade';
+import { getTrades, createTrade, updateTrade, deleteTrade, TradeFormData } from '../actions/trade';
+import { Trade } from '../types/Trade';
 import TradeForm from '../components/TradeForm';
 import TradeTable from '../components/TradeTable';
 import CSVImport from '../components/CSVImport';
@@ -74,11 +74,11 @@ export default function TradesPage() {
     loadTrades();
   }, []);
 
-  const handleSubmitTrade = async (data: TradeFormData) => {
+  const handleSubmitTrade = async () => {
     try {
-      if (editTrade.id !== null) {
+      if (editTrade.id !== null && editTrade.data) {
         // Edit existing trade
-        await updateTrade(Number(editTrade.id), convertDatesToISOString(data));
+        await updateTrade(Number(editTrade.id), convertDatesToISOString(editTrade.data));
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => convertDatesToISOString({
           ...trade,
@@ -89,9 +89,9 @@ export default function TradesPage() {
           index: null,
           id: null
         });
-      } else {
+      } else if (editTrade.data) {
         // Add new trade
-        await createTrade(convertDatesToISOString(data));
+        await createTrade(convertDatesToISOString(editTrade.data));
         const updatedTrades = await getTrades();
         setTrades(updatedTrades.map(trade => convertDatesToISOString({
           ...trade,
@@ -143,7 +143,7 @@ export default function TradesPage() {
     setShowTradeDetails(false);
   };
 
-  const handleImportTrades = async (importedTrades: TradeFormData[]) => {
+  const handleImportTrades = async (importedTrades: any[]) => {
     try {
       // Import each trade
       for (const trade of importedTrades) {
@@ -202,9 +202,12 @@ export default function TradesPage() {
 
       {/* Trade form section */}
       <TradeForm 
-        onSubmit={handleSubmitTrade} 
-        editTrade={editTrade} 
-        onCancelEdit={handleCancelEdit} 
+        initialData={editTrade.data ? { 
+          ...editTrade.data, 
+          id: editTrade.id ? Number(editTrade.id) : undefined 
+        } : undefined}
+        onSuccess={handleSubmitTrade}
+        onCancel={handleCancelEdit}
       />
 
       {/* Trade table section */}
