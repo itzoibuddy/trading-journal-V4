@@ -201,42 +201,14 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
     }
   }, [initialData, setValue]);
 
-  const handleFormSubmit = async (data: TradeFormData) => {
-    // Sanitize text inputs to prevent XSS attacks
-    const sanitizedData = {
-      ...data,
-      symbol: DOMPurify.sanitize(data.symbol),
-      notes: data.notes ? DOMPurify.sanitize(data.notes) : data.notes,
-      sector: data.sector ? DOMPurify.sanitize(data.sector) : data.sector,
-      strategy: data.strategy ? DOMPurify.sanitize(data.strategy) : data.strategy,
-      lessons: data.lessons ? DOMPurify.sanitize(data.lessons) : data.lessons,
-      setupImageUrl: data.setupImageUrl ? DOMPurify.sanitize(data.setupImageUrl) : data.setupImageUrl,
-      // Ensure dates are properly formatted as strings
-      entryDate: data.entryDate,
-      exitDate: data.exitDate,
-      expiryDate: data.expiryDate
-    };
-    
-    try {
-      console.log("Form submission data:", JSON.stringify(sanitizedData, null, 2));
-      console.log("Initial data:", initialData);
-      
-      if (initialData && initialData.id) {
-        // Update existing trade
-        console.log("Updating trade with ID:", initialData.id);
-        await updateTrade(initialData.id, sanitizedData);
-        console.log("Trade updated successfully");
-      } else {
-        // Create new trade
-        console.log("Creating new trade");
-        await createTrade(sanitizedData);
-        console.log("Trade created successfully");
-      }
-      onSuccess();
-      reset();
-    } catch (error) {
-      console.error('Error saving trade:', error);
+  const handleFormSubmit = async (data: TradeFormData & { id?: number }) => {
+    const { id, ...formDataWithoutId } = data;
+    if (id) {
+      await updateTrade(id, formDataWithoutId);
+    } else {
+      await createTrade(formDataWithoutId);
     }
+    onSuccess();
   };
 
   return (
