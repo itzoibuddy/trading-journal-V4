@@ -84,9 +84,9 @@ export default function AnalyticsPage() {
     // Profit/Loss filter
     let profitMatch = true;
     if (selectedFilter === 'profitable') {
-      profitMatch = trade.profitLoss && trade.profitLoss > 0;
+      profitMatch = trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss > 0;
     } else if (selectedFilter === 'losing') {
-      profitMatch = trade.profitLoss && trade.profitLoss < 0;
+      profitMatch = trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss < 0;
     }
 
     return timeMatch && strategyMatch && profitMatch;
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
           monthlyData[monthKey] = { profit: 0, trades: 0 };
         }
         
-        monthlyData[monthKey].profit += trade.profitLoss;
+                 monthlyData[monthKey].profit += trade.profitLoss || 0;
         monthlyData[monthKey].trades += 1;
       }
     });
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
       }
       
       if (trade.profitLoss !== null) {
-        sectorData[sector].profit += trade.profitLoss;
+                 sectorData[sector].profit += trade.profitLoss || 0;
         sectorData[sector].trades += 1;
       }
     });
