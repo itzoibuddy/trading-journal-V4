@@ -117,3 +117,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Built with Next.js, Prisma, and TailwindCSS
 - Chart visualizations powered by Chart.js
+
+# Updated for deployment
