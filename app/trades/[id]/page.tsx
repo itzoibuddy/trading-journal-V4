@@ -174,7 +174,7 @@ export default function TradeDetailsPage() {
 
             {/* Right Column - P&L and Risk Management */}
             <div>
-              {trade.profitLoss !== null && (
+              {trade.profitLoss !== null && trade.profitLoss !== undefined && (
                 <div className={`p-6 rounded-xl mb-6 ${
                   isProfitable ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
                 }`}>
