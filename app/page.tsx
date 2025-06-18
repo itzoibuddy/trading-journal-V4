@@ -350,17 +350,18 @@ export default function HomePage() {
               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
                 🕒 Recent Trades
               </h2>
-              <div className="space-y-3">
+                            <div className="space-y-3">
                 {recentTrades.length > 0 ? recentTrades.map((trade, index) => (
-                  <div
+                  <a
                     key={trade.id || index}
-                                         className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-md animate-fade-in-up ${
-                       trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss > 0
-                         ? 'bg-green-50 border-green-200 hover:bg-green-100'
-                         : trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss < 0
-                         ? 'bg-red-50 border-red-200 hover:bg-red-100'
-                         : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                     }`}
+                    href={`/trades/${trade.id}`}
+                    className={`block p-3 rounded-lg border transition-all duration-200 hover:shadow-md animate-fade-in-up cursor-pointer ${
+                      trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss > 0
+                        ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                        : trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss < 0
+                        ? 'bg-red-50 border-red-200 hover:bg-red-100'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
                     style={{ animationDelay: `${(index + 8) * 100}ms` }}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -387,7 +388,7 @@ export default function HomePage() {
                        <span className="text-gray-500 text-xs">Open</span>
                      )}
                     </div>
-                  </div>
+                  </a>
                 )) : (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">📭</div>
