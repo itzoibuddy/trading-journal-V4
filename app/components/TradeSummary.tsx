@@ -56,21 +56,12 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
   const grossLoss = Math.abs(filteredTrades.filter(trade => (trade.profitLoss || 0) < 0).reduce((sum, trade) => sum + (trade.profitLoss || 0), 0));
   const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
   
-  // Calculate success by instrument type
-  const stockTrades = filteredTrades.filter(trade => trade.instrumentType === 'STOCK');
-  const futuresTrades = filteredTrades.filter(trade => trade.instrumentType === 'FUTURES');
-  const optionsTrades = filteredTrades.filter(trade => trade.instrumentType === 'OPTIONS');
+
   
-  const stockPL = stockTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
-  const futuresPL = futuresTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
-  const optionsPL = optionsTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
-  
-  // Calculate success by trade type (LONG/SHORT)
-  const longTrades = filteredTrades.filter(trade => trade.type === 'LONG');
-  const shortTrades = filteredTrades.filter(trade => trade.type === 'SHORT');
-  
-  const longPL = longTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
-  const shortPL = shortTrades.reduce((sum, trade) => sum + (trade.profitLoss || 0), 0);
+  // Calculate best and worst trades
+  const completedTrades = filteredTrades.filter(trade => trade.profitLoss !== null && trade.profitLoss !== undefined);
+  const maxProfit = completedTrades.length > 0 ? Math.max(...completedTrades.map(trade => trade.profitLoss || 0)) : 0;
+  const maxLoss = completedTrades.length > 0 ? Math.min(...completedTrades.map(trade => trade.profitLoss || 0)) : 0;
   
   // Helper function to format currency with 2 decimal places
   const formatCurrency = (value: number | null | undefined): string => {
@@ -152,104 +143,31 @@ export default function TradeSummary({ trades }: TradeSummaryProps) {
         </div>
       </div>
       
-      {/* Charts section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Instrument Type Performance */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Instrument Performance</h3>
-          
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between mb-1">
-                <p className="text-sm">Stocks ({stockTrades.length})</p>
-                <p className={`text-sm font-medium ${stockPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stockPL >= 0 ? '+' : ''}₹{formatCurrency(stockPL)}
-                </p>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-1.5 rounded-full ${stockPL >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(Math.abs(stockPL) / (Math.abs(stockPL) + Math.abs(futuresPL) + Math.abs(optionsPL)) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex justify-between mb-1">
-                <p className="text-sm">Futures ({futuresTrades.length})</p>
-                <p className={`text-sm font-medium ${futuresPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {futuresPL >= 0 ? '+' : ''}₹{formatCurrency(futuresPL)}
-                </p>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-1.5 rounded-full ${futuresPL >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(Math.abs(futuresPL) / (Math.abs(stockPL) + Math.abs(futuresPL) + Math.abs(optionsPL)) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex justify-between mb-1">
-                <p className="text-sm">Options ({optionsTrades.length})</p>
-                <p className={`text-sm font-medium ${optionsPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {optionsPL >= 0 ? '+' : ''}₹{formatCurrency(optionsPL)}
-                </p>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-1.5 rounded-full ${optionsPL >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(Math.abs(optionsPL) / (Math.abs(stockPL) + Math.abs(futuresPL) + Math.abs(optionsPL)) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
+      {/* Additional Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Best Trade */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+          <h3 className="text-sm font-semibold text-green-700 mb-2">Best Trade</h3>
+          <p className="text-lg font-bold text-green-600">
+            {maxProfit > 0 ? `+₹${formatCurrency(maxProfit)}` : 'No profits yet'}
+          </p>
         </div>
         
-        {/* Long vs Short Performance */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Long vs Short</h3>
-          
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between mb-1">
-                <p className="text-sm">Long ({longTrades.length})</p>
-                <p className={`text-sm font-medium ${longPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {longPL >= 0 ? '+' : ''}₹{formatCurrency(longPL)}
-                </p>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-1.5 rounded-full ${longPL >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(Math.abs(longPL) / (Math.abs(longPL) + Math.abs(shortPL)) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            <div>
-              <div className="flex justify-between mb-1">
-                <p className="text-sm">Short ({shortTrades.length})</p>
-                <p className={`text-sm font-medium ${shortPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {shortPL >= 0 ? '+' : ''}₹{formatCurrency(shortPL)}
-                </p>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-1.5 rounded-full ${shortPL >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(Math.abs(shortPL) / (Math.abs(longPL) + Math.abs(shortPL)) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-            
-            {/* Average Trade */}
-            <div className="mt-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Average Trade</h4>
-              <p className={`text-xl font-bold ${avgPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {avgPL >= 0 ? '+' : ''}₹{formatCurrency(avgPL)}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">Per completed trade</p>
-            </div>
-          </div>
+        {/* Worst Trade */}
+        <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-lg p-4 border border-red-200">
+          <h3 className="text-sm font-semibold text-red-700 mb-2">Worst Trade</h3>
+          <p className="text-lg font-bold text-red-600">
+            {maxLoss < 0 ? `₹${formatCurrency(maxLoss)}` : 'No losses yet'}
+          </p>
+        </div>
+        
+        {/* Average Trade */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+          <h3 className="text-sm font-semibold text-blue-700 mb-2">Average Trade</h3>
+          <p className={`text-lg font-bold ${avgPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {avgPL >= 0 ? '+' : ''}₹{formatCurrency(avgPL)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Per completed trade</p>
         </div>
       </div>
     </div>

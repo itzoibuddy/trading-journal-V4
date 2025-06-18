@@ -349,32 +349,6 @@ export default function TradesPage() {
                 <CSVImport onImport={handleImportTrades} />
                 
                 <button
-                  onClick={() => {
-                    // Create and download sample CSV
-                    const sampleData = `Symbol,Type,Strategy,Entry Price,Exit Price,Quantity,Entry Date,Exit Date,Notes
-NIFTY,LONG,Breakout,24500,24800,75,2025-01-15,2025-01-15,Sample trade
-BANKNIFTY,SHORT,Support Resistance,51000,50500,25,2025-01-14,2025-01-14,Sample short trade`;
-                    
-                    const blob = new Blob([sampleData], { type: 'text/csv' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = 'sample_trades.csv';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                  }}
-                  className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Download Sample
-                </button>
-                
-                <button
                   onClick={() => setShowAddForm(true)}
                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105"
                 >
