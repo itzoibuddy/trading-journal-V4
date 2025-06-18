@@ -233,24 +233,29 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                 // Parse price
                 const price = parseFloat(priceValue.toString());
                 
+                // Validate and sanitize the data
+                const validatedPrice = isNaN(price) || price <= 0 ? 1 : price;
+                const validatedQuantity = isNaN(quantity) || quantity <= 0 ? 1 : quantity;
+                const validatedStrikePrice = isNaN(strikePrice) || strikePrice <= 0 ? null : strikePrice;
+                
                 // Calculate lots for display in notes
                 const lotSize = getLotSize(symbol);
                 const lots = lotSize > 1 ? Math.round(quantity / lotSize * 100) / 100 : quantity;
                 
                 imported.push({
-                  symbol,
+                  symbol: symbol || 'UNKNOWN',
                   type: tradeType,
                   instrumentType,
-                  entryPrice: price,
+                  entryPrice: validatedPrice,
                   exitPrice: null,
-                  quantity,
-                  strikePrice: strikePrice > 0 ? strikePrice : null,
+                  quantity: validatedQuantity,
+                  strikePrice: validatedStrikePrice,
                   expiryDate: expiryDate,
                   optionType: finalOptionType,
                   entryDate,
                   exitDate: null,
                   profitLoss: null,
-                  notes: `${instrumentValue} ${typeValue} @ ${price} (Strike: ${strikePrice}, Qty: ${quantity} = ${lots} lots)`,
+                  notes: `${instrumentValue} ${typeValue} @ ${validatedPrice} (Strike: ${validatedStrikePrice || 'N/A'}, Qty: ${validatedQuantity} = ${lots} lots)`,
                   sector: 'Index',
                   strategy: null,
                   setupImageUrl: null,
@@ -349,21 +354,36 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                   }
                 }
                 
+                // Validate and sanitize the data for original format
+                const validatedEntryPrice = parseFloat(entryPrice);
+                const validatedQuantity = parseFloat(quantity);
+                const validatedStrikePrice = strikePrice && parseFloat(strikePrice.toString()) > 0 ? parseFloat(strikePrice.toString()) : null;
+                
+                // Ensure valid numeric values
+                if (isNaN(validatedEntryPrice) || validatedEntryPrice <= 0) {
+                  console.warn(`Invalid entry price for ${symbol}, skipping trade`);
+                  continue;
+                }
+                if (isNaN(validatedQuantity) || validatedQuantity <= 0) {
+                  console.warn(`Invalid quantity for ${symbol}, skipping trade`);
+                  continue;
+                }
+                
                 imported.push({
-                  symbol,
+                  symbol: symbol || 'UNKNOWN',
                   type: type.toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG',
                   instrumentType: instrumentType === 'OPTIONS' ? 'OPTIONS' : instrumentType === 'FUTURES' ? 'FUTURES' : 'STOCK',
-                  entryPrice: parseFloat(entryPrice),
+                  entryPrice: validatedEntryPrice,
                   exitPrice,
-                  quantity: parseFloat(quantity),
-                  strikePrice: strikePrice && strikePrice > 0 ? strikePrice : null,
+                  quantity: validatedQuantity,
+                  strikePrice: validatedStrikePrice,
                   expiryDate: formattedExpiryDate,
                   optionType: optionType === 'PUT' ? 'PUT' : optionType === 'CALL' ? 'CALL' : null,
                   entryDate: formattedEntryDate,
                   exitDate: formattedExitDate,
                   profitLoss,
-                  notes,
-                  sector,
+                  notes: notes || '',
+                  sector: sector || '',
                   strategy: null,
                   setupImageUrl: null,
                   preTradeEmotion: null,
