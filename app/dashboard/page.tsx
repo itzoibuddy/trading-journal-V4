@@ -1,11 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartData,
+} from 'chart.js';
 import { Trade } from '../types/Trade';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+// Color constants for chart
+const POSITIVE_COLOR = 'rgb(22, 163, 74)'; // Green
+const NEGATIVE_COLOR = 'rgb(220, 38, 38)'; // Red
+const POSITIVE_BG_COLOR = 'rgba(22, 163, 74, 0.1)';
+const NEGATIVE_BG_COLOR = 'rgba(220, 38, 38, 0.1)';
 
 export default function DashboardPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [equityCurveData, setEquityCurveData] = useState<ChartData<'line'>>({
+    labels: [],
+    datasets: [
+      {
+        label: 'Equity Curve',
+        data: [],
+        borderColor: POSITIVE_COLOR,
+        backgroundColor: POSITIVE_BG_COLOR,
+        tension: 0.3,
+        fill: true,
+      },
+    ],
+  });
 
   useEffect(() => {
     const fetchTrades = async () => {
@@ -14,6 +55,9 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json();
           setTrades(data);
+          if (data.length > 0) {
+            generateEquityCurve(data);
+          }
         }
       } catch (error) {
         console.error('Error fetching trades:', error);
@@ -24,6 +68,50 @@ export default function DashboardPage() {
 
     fetchTrades();
   }, []);
+
+  const generateEquityCurve = (tradesData: Trade[]) => {
+    // Sort trades by entry date
+    const sortedTrades = [...tradesData].sort((a, b) => 
+      new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+    );
+    
+    // Generate equity curve data
+    let runningTotal = 0;
+    const equityPoints = sortedTrades
+      .filter(trade => trade.profitLoss !== null && trade.profitLoss !== undefined)
+      .map(trade => {
+        runningTotal += (trade.profitLoss || 0);
+        return {
+          date: new Date(trade.entryDate).toLocaleDateString(),
+          equity: runningTotal
+        };
+      });
+    
+    // Group by date for the chart
+    const equityByDate = equityPoints.reduce((acc: Record<string, number>, point) => {
+      acc[point.date] = point.equity;
+      return acc;
+    }, {});
+    
+    const chartLabels = Object.keys(equityByDate);
+    const chartData = Object.values(equityByDate) as number[];
+    
+    setEquityCurveData({
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'Equity Curve',
+          data: chartData,
+          segment: {
+            borderColor: ctx => chartData[ctx.p1DataIndex] >= 0 ? POSITIVE_COLOR : NEGATIVE_COLOR,
+            backgroundColor: ctx => chartData[ctx.p1DataIndex] >= 0 ? POSITIVE_BG_COLOR : NEGATIVE_BG_COLOR
+          },
+          tension: 0.3,
+          fill: true,
+        },
+      ],
+    });
+  };
 
   if (loading) {
     return (
@@ -176,6 +264,57 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Equity Curve Chart */}
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            📈 Equity Curve
+          </h2>
+          {trades.length > 0 ? (
+            <div className="h-80">
+              <Line 
+                data={equityCurveData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: false,
+                      grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.05)',
+                      },
+                      ticks: {
+                        callback: value => '₹' + Number(value).toLocaleString('en-IN')
+                      }
+                    },
+                    x: {
+                      grid: {
+                        display: false,
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: context => '₹' + context.parsed.y.toLocaleString('en-IN')
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-5xl mb-4">📊</div>
+              <p className="text-gray-500 text-lg">No trade data available</p>
+              <p className="text-sm text-gray-400 mt-1">Start trading to see your equity curve</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
