@@ -13,7 +13,7 @@ import {
   Legend,
   ChartData,
 } from 'chart.js';
-import { Trade } from '../types/Trade';
+import { Trade } from './types/Trade';
 
 ChartJS.register(
   CategoryScale,
@@ -31,7 +31,7 @@ const NEGATIVE_COLOR = 'rgb(220, 38, 38)'; // Red
 const POSITIVE_BG_COLOR = 'rgba(22, 163, 74, 0.1)';
 const NEGATIVE_BG_COLOR = 'rgba(220, 38, 38, 0.1)';
 
-export default function DashboardPage() {
+export default function HomePage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [equityCurveData, setEquityCurveData] = useState<ChartData<'line'>>({
@@ -354,13 +354,13 @@ export default function DashboardPage() {
                 {recentTrades.length > 0 ? recentTrades.map((trade, index) => (
                   <div
                     key={trade.id || index}
-                                         className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-md animate-fade-in-up ${
-                       trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss > 0
-                         ? 'bg-green-50 border-green-200 hover:bg-green-100'
-                         : trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss < 0
-                         ? 'bg-red-50 border-red-200 hover:bg-red-100'
-                         : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                     }`}
+                    className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-md animate-fade-in-up ${
+                      trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss > 0
+                        ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                        : trade.profitLoss !== null && trade.profitLoss !== undefined && trade.profitLoss < 0
+                        ? 'bg-red-50 border-red-200 hover:bg-red-100'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
                     style={{ animationDelay: `${(index + 8) * 100}ms` }}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -377,15 +377,15 @@ export default function DashboardPage() {
                       <span className="text-gray-600">
                         {new Date(trade.entryDate).toLocaleDateString()}
                       </span>
-                                           {trade.profitLoss !== null && trade.profitLoss !== undefined ? (
-                       <span className={`font-semibold ${
-                         trade.profitLoss > 0 ? 'text-green-600' : 'text-red-600'
-                       }`}>
-                         {trade.profitLoss > 0 ? '+' : ''}₹{Math.abs(trade.profitLoss).toFixed(2)}
-                       </span>
-                     ) : (
-                       <span className="text-gray-500 text-xs">Open</span>
-                     )}
+                      {trade.profitLoss !== null && trade.profitLoss !== undefined ? (
+                        <span className={`font-semibold ${
+                          trade.profitLoss > 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {trade.profitLoss > 0 ? '+' : ''}₹{Math.abs(trade.profitLoss).toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-xs">Open</span>
+                      )}
                     </div>
                   </div>
                 )) : (
@@ -464,4 +464,4 @@ export default function DashboardPage() {
       `}</style>
     </div>
   );
-}
+} 
