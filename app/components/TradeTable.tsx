@@ -293,87 +293,106 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
             </div>
           </div>
           
-          <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-lg">
             <div className="min-w-full">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
+                <thead className="bg-gradient-to-r from-gray-50 to-slate-50 sticky top-0">
                   <tr>
                     {visibleColumns.entryDate && (
-                      <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Entry Date
+                      <th className="sticky left-0 z-10 bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider border-r border-indigo-200">
+                        📅 Entry Date
                       </th>
                     )}
                     {visibleColumns.symbol && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Symbol
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        🏷️ Symbol
                       </th>
                     )}
                     {visibleColumns.type && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Type
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        📈 Type
                       </th>
                     )}
                     {visibleColumns.strategy && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Strategy
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        🎯 Strategy
                       </th>
                     )}
                     {visibleColumns.entryPrice && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Entry Price
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        💰 Entry Price
                       </th>
                     )}
                     {visibleColumns.exitPrice && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Exit Price
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        💸 Exit Price
                       </th>
                     )}
                     {visibleColumns.quantity && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Quantity
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        📊 Quantity
                       </th>
                     )}
                     {visibleColumns.strikePrice && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Strike Price
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        🎢 Strike Price
                       </th>
                     )}
                     {visibleColumns.profitLoss && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        P/L
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        💹 P/L
                       </th>
                     )}
                     {visibleColumns.rating && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Rating
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        ⭐ Rating
                       </th>
                     )}
                     {visibleColumns.actions && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Actions
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        ⚡ Actions
                       </th>
                     )}
                   </tr>
                 </thead>
                 <tbody>
-                  {currentTrades.map((trade, index) => (
+                  {currentTrades.map((trade, index) => {
+                    const isProfit = trade.profitLoss && trade.profitLoss > 0;
+                    const isLoss = trade.profitLoss && trade.profitLoss < 0;
+                    
+                    return (
                     <tr
                       key={trade.id || index}
-                      className={
+                      className={`transition-all duration-200 hover:bg-gradient-to-r hover:shadow-md ${
+                        isProfit 
+                          ? 'hover:from-green-50 hover:to-emerald-50 hover:border-l-4 hover:border-green-400' 
+                          : isLoss 
+                            ? 'hover:from-red-50 hover:to-pink-50 hover:border-l-4 hover:border-red-400'
+                            : 'hover:from-blue-50 hover:to-indigo-50 hover:border-l-4 hover:border-blue-400'
+                      } ${
                         index % 2 === 0
                           ? 'bg-white'
                           : 'bg-gray-50'
-                      }
+                      }`}
                     >
+                    
                       {visibleColumns.entryDate && (
-                        <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-inherit border-r border-gray-200">
-                          {new Date(trade.entryDate).toLocaleString('en-IN', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                        <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap text-sm font-medium bg-inherit border-r border-indigo-200">
+                          <div className="flex flex-col">
+                            <span className="text-gray-900 font-semibold">
+                              {new Date(trade.entryDate).toLocaleDateString('en-IN', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: 'numeric'
+                              })}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(trade.entryDate).toLocaleTimeString('en-IN', { 
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
                         </td>
                       )}
                       {visibleColumns.symbol && (
@@ -387,11 +406,15 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                         </td>
                       )}
                       {visibleColumns.type && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {tradeTypeIcon(trade.type)}
-                          <span className={trade.type === 'LONG' ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
-                            {trade.type}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            trade.type === 'LONG' 
+                              ? 'bg-green-100 text-green-800 border border-green-200' 
+                              : 'bg-red-100 text-red-800 border border-red-200'
+                          }`}>
+                            {tradeTypeIcon(trade.type)}
+                            <span className="ml-1">{trade.type}</span>
+                          </div>
                         </td>
                       )}
                       {visibleColumns.strategy && (
@@ -433,48 +456,59 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                       {visibleColumns.profitLoss && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                           {trade.profitLoss ? (
-                            <span className={trade.profitLoss > 0 ? 'text-green-700' : 'text-red-700'}>
-                              {trade.profitLoss > 0 ? '+' : ''}₹{formatCurrency(trade.profitLoss)}
+                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              trade.profitLoss > 0 
+                                ? 'bg-green-100 text-green-800 border border-green-200' 
+                                : 'bg-red-100 text-red-800 border border-red-200'
+                            }`}>
+                              {trade.profitLoss > 0 ? '📈 +' : '📉 '}₹{formatCurrency(trade.profitLoss)}
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                              ⏳ Pending
                             </span>
-                          ) : '-'}
+                          )}
                         </td>
                       )}
                       {visibleColumns.rating && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {trade.tradeRating ? (
-                            <div className="flex items-center">
-                              <span className={`font-semibold ${
-                                trade.tradeRating >= 8 ? 'text-green-700' : 
-                                trade.tradeRating >= 5 ? 'text-amber-600' : 
-                                'text-red-700'
-                              }`}>
-                                {trade.tradeRating}
-                              </span>
-                              <span className="ml-1 text-gray-400">/10</span>
+                            <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                              trade.tradeRating >= 8 ? 'bg-green-100 text-green-800 border border-green-200' : 
+                              trade.tradeRating >= 5 ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : 
+                              'bg-red-100 text-red-800 border border-red-200'
+                            }`}>
+                              {'⭐'.repeat(Math.min(Math.floor(trade.tradeRating / 2), 5))} {trade.tradeRating}/10
                             </div>
-                          ) : '-'}
+                          ) : (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                              ❓ Not rated
+                            </span>
+                          )}
                         </td>
                       )}
                       {visibleColumns.actions && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
-                          <button
-                            className="px-3 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md"
-                            onClick={() => onEdit(indexOfFirstTrade + index)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="px-3 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md ml-2"
-                            onClick={() => onViewDetails(indexOfFirstTrade + index)}
-                          >
-                            Details
-                          </button>
-                          <button
-                            className="px-3 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-md ml-2"
-                            onClick={() => setShowDeleteIndex(indexOfFirstTrade + index)}
-                          >
-                            Delete
-                          </button>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="flex gap-2">
+                            <button
+                              className="inline-flex items-center px-3 py-1.5 text-xs bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 text-indigo-700 border border-indigo-200 rounded-lg transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                              onClick={() => onEdit(indexOfFirstTrade + index)}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              className="inline-flex items-center px-3 py-1.5 text-xs bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 text-blue-700 border border-blue-200 rounded-lg transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                              onClick={() => onViewDetails(indexOfFirstTrade + index)}
+                            >
+                              👁️ Details
+                            </button>
+                            <button
+                              className="inline-flex items-center px-3 py-1.5 text-xs bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 text-red-700 border border-red-200 rounded-lg transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                              onClick={() => setShowDeleteIndex(indexOfFirstTrade + index)}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
                           {showDeleteIndex === indexOfFirstTrade + index && (
                             <span className="ml-2 flex items-center">
                               <span className="text-xs text-gray-600 mr-2">Are you sure? </span>
@@ -511,7 +545,8 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                         </td>
                       )}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
