@@ -63,6 +63,8 @@ export default function TradesPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterType, setFilterType] = useState<'ALL' | 'LONG' | 'SHORT' | 'OPEN' | 'CLOSED'>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'symbol' | 'pnl'>('date');
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadTrades() {
@@ -154,12 +156,22 @@ export default function TradesPage() {
   const handleDeleteTrade = async (index: number) => {
     if (!trades[index]?.id) return;
     
+    const tradeSymbol = trades[index].symbol;
+    setIsDeleting(true);
+    
     try {
       await deleteTrade(trades[index].id!);
       setTrades(trades.filter((_, i) => i !== index));
+      
+      // Show success message
+      setDeleteMessage(`Trade ${tradeSymbol} deleted successfully!`);
+      setTimeout(() => setDeleteMessage(null), 3000);
+      
     } catch (error) {
       console.error("Error deleting trade:", error);
       setError("Failed to delete trade. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -338,6 +350,17 @@ export default function TradesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="font-medium">{importMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {deleteMessage && (
+          <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span className="font-medium">{deleteMessage}</span>
             </div>
           </div>
         )}
@@ -547,6 +570,7 @@ export default function TradesPage() {
               onEdit={handleEditTrade}
               onDelete={handleDeleteTrade}
               onViewDetails={handleViewTradeDetails}
+              isDeleting={isDeleting}
             />
           )}
         </div>

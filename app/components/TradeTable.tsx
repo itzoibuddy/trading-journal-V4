@@ -39,9 +39,10 @@ interface TradeTableProps {
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
   onViewDetails: (index: number) => void;
+  isDeleting?: boolean;
 }
 
-export default function TradeTable({ trades, onEdit, onDelete, onViewDetails }: TradeTableProps) {
+export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, isDeleting = false }: TradeTableProps) {
   const [showDeleteIndex, setShowDeleteIndex] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<{[key: string]: boolean}>({
     symbol: true,
@@ -469,18 +470,33 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails }: 
                             Delete
                           </button>
                           {showDeleteIndex === indexOfFirstTrade + index && (
-                            <span className="ml-2">
-                              <span>Are you sure? </span>
+                            <span className="ml-2 flex items-center">
+                              <span className="text-xs text-gray-600 mr-2">Are you sure? </span>
                               <button
-                                className="px-2 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-md"
-                                onClick={() => onDelete(indexOfFirstTrade + index)}
+                                className="px-2 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                onClick={() => {
+                                  onDelete(indexOfFirstTrade + index);
+                                  setShowDeleteIndex(null);
+                                }}
+                                disabled={isDeleting}
                               >
-                                Yes
+                                {isDeleting ? (
+                                  <>
+                                    <svg className="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  'Yes'
+                                )}
                               </button>
-                              <span className="mx-1">/</span>
+                              <span className="mx-1 text-gray-400">/</span>
                               <button
-                                className="px-2 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-md"
+                                className="px-2 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-md disabled:opacity-50"
                                 onClick={() => setShowDeleteIndex(null)}
+                                disabled={isDeleting}
                               >
                                 No
                               </button>
