@@ -61,7 +61,7 @@ export default function TradesPage() {
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filterType, setFilterType] = useState<'ALL' | 'LONG' | 'SHORT' | 'OPEN' | 'CLOSED'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'LONG' | 'SHORT' | 'OPEN' | 'CLOSED' | 'WINNING' | 'LOSING'>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'symbol' | 'pnl'>('date');
   const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -245,6 +245,12 @@ export default function TradesPage() {
       case 'CLOSED':
         filteredTrades = filteredTrades.filter(trade => trade.exitPrice);
         break;
+      case 'WINNING':
+        filteredTrades = filteredTrades.filter(trade => trade.profitLoss && trade.profitLoss > 0);
+        break;
+      case 'LOSING':
+        filteredTrades = filteredTrades.filter(trade => trade.profitLoss && trade.profitLoss < 0);
+        break;
     }
 
     // Apply sorting
@@ -284,40 +290,90 @@ export default function TradesPage() {
               </h1>
               <p className="text-gray-600 text-lg">Track, analyze, and improve your trading performance</p>
               
-              {/* Quick Stats */}
+              {/* Quick Stats - Clickable */}
               <div className="flex flex-wrap gap-4 mt-4">
-                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border">
+                <button
+                  onClick={() => {
+                    setFilterType('WINNING');
+                    setSearchQuery('');
+                  }}
+                  className="flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 px-4 py-2 rounded-lg shadow-sm border border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-md cursor-pointer"
+                >
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-green-700">
                     {trades.filter(t => t.profitLoss && t.profitLoss > 0).length} Winning Trades
                   </span>
-                </div>
-                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border">
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setFilterType('LOSING');
+                    setSearchQuery('');
+                  }}
+                  className="flex items-center gap-2 bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 px-4 py-2 rounded-lg shadow-sm border border-red-200 hover:border-red-300 transition-all duration-200 hover:shadow-md cursor-pointer"
+                >
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-red-700">
                     {trades.filter(t => t.profitLoss && t.profitLoss < 0).length} Losing Trades
                   </span>
-                </div>
-                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border">
+                </button>
+                
+                <button
+                  onClick={() => setFilterType('OPEN')}
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 px-4 py-2 rounded-lg shadow-sm border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md cursor-pointer"
+                >
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-blue-700">
                     {trades.filter(t => !t.exitPrice).length} Open Positions
                   </span>
-                </div>
-                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border">
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setFilterType('ALL');
+                    setSearchQuery('');
+                  }}
+                  className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 px-4 py-2 rounded-lg shadow-sm border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md cursor-pointer"
+                >
                   <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
                   <span className="text-sm font-medium text-gray-700">
                     {trades.length} Total Trades
                   </span>
-                </div>
+                </button>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3">
-              <CSVImport onImport={handleImportTrades} />
-              
-              {/* Quick Action Buttons */}
-              <div className="flex gap-2">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <CSVImport onImport={handleImportTrades} />
+                
+                <button
+                  onClick={() => {
+                    // Create and download sample CSV
+                    const sampleData = `Symbol,Type,Strategy,Entry Price,Exit Price,Quantity,Entry Date,Exit Date,Notes
+NIFTY,LONG,Breakout,24500,24800,75,2025-01-15,2025-01-15,Sample trade
+BANKNIFTY,SHORT,Support Resistance,51000,50500,25,2025-01-14,2025-01-14,Sample short trade`;
+                    
+                    const blob = new Blob([sampleData], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'sample_trades.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                  }}
+                  className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-medium rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download Sample
+                </button>
+                
                 <button
                   onClick={() => setShowAddForm(true)}
                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105"
@@ -326,16 +382,6 @@ export default function TradesPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                   </svg>
                   Add New Trade
-                </button>
-                
-                <button
-                  onClick={() => setFilterType('OPEN')}
-                  className="inline-flex items-center px-4 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md"
-                  title="View open positions"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
                 </button>
               </div>
             </div>
@@ -477,10 +523,12 @@ export default function TradesPage() {
                 className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition-colors"
               >
                 <option value="ALL">All Trades</option>
-                <option value="LONG">Long Only</option>
-                <option value="SHORT">Short Only</option>
+                <option value="WINNING">Winning Trades</option>
+                <option value="LOSING">Losing Trades</option>
                 <option value="OPEN">Open Positions</option>
                 <option value="CLOSED">Closed Trades</option>
+                <option value="LONG">Long Only</option>
+                <option value="SHORT">Short Only</option>
               </select>
               
               <select

@@ -45,6 +45,7 @@ interface TradeTableProps {
 export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, isDeleting = false }: TradeTableProps) {
   const [showDeleteIndex, setShowDeleteIndex] = useState<number | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<{[key: string]: boolean}>({
+    entryDate: true,
     symbol: true,
     type: true,
     strategy: true,
@@ -54,7 +55,6 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
     strikePrice: true,
     profitLoss: true,
     rating: true,
-    entryDate: true,
     actions: true
   });
   
@@ -99,6 +99,7 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
   // Reset column visibility to default
   const resetColumns = () => {
     setVisibleColumns({
+      entryDate: true,
       symbol: true,
       type: true,
       strategy: true,
@@ -108,7 +109,6 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
       strikePrice: true,
       profitLoss: true,
       rating: true,
-      entryDate: true,
       actions: true
     });
   };
@@ -146,6 +146,15 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
+                    <label className="flex items-center text-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={visibleColumns.entryDate} 
+                        onChange={() => toggleColumn('entryDate')}
+                        className="mr-2 h-4 w-4 text-indigo-600"
+                      />
+                      Entry Date
+                    </label>
                     <label className="flex items-center text-sm">
                       <input 
                         type="checkbox" 
@@ -230,15 +239,6 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                     <label className="flex items-center text-sm">
                       <input 
                         type="checkbox" 
-                        checked={visibleColumns.entryDate} 
-                        onChange={() => toggleColumn('entryDate')}
-                        className="mr-2 h-4 w-4 text-indigo-600"
-                      />
-                      Entry Date
-                    </label>
-                    <label className="flex items-center text-sm">
-                      <input 
-                        type="checkbox" 
                         checked={visibleColumns.actions} 
                         onChange={() => toggleColumn('actions')}
                         className="mr-2 h-4 w-4 text-indigo-600"
@@ -298,8 +298,13 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    {visibleColumns.symbol && (
+                    {visibleColumns.entryDate && (
                       <th className="sticky left-0 z-10 bg-gray-50 px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Entry Date
+                      </th>
+                    )}
+                    {visibleColumns.symbol && (
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Symbol
                       </th>
                     )}
@@ -343,11 +348,6 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                         Rating
                       </th>
                     )}
-                    {visibleColumns.entryDate && (
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Entry Date
-                      </th>
-                    )}
                     {visibleColumns.actions && (
                       <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                         Actions
@@ -365,8 +365,19 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                           : 'bg-gray-50'
                       }
                     >
-                      {visibleColumns.symbol && (
+                      {visibleColumns.entryDate && (
                         <td className="sticky left-0 z-10 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-inherit border-r border-gray-200">
+                          {new Date(trade.entryDate).toLocaleString('en-IN', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                      )}
+                      {visibleColumns.symbol && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {trade.symbol}
                           {trade.instrumentType === 'OPTIONS' && (
                             <span className="ml-1 text-xs text-gray-500">
@@ -442,11 +453,6 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
                               <span className="ml-1 text-gray-400">/10</span>
                             </div>
                           ) : '-'}
-                        </td>
-                      )}
-                      {visibleColumns.entryDate && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {new Date(trade.entryDate).toLocaleString('en-IN')}
                         </td>
                       )}
                       {visibleColumns.actions && (
