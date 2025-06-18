@@ -175,10 +175,16 @@ export default function TradesPage() {
       // Import each trade
       for (const trade of importedTrades) {
         try {
+          console.log("Creating trade:", trade);
           await createTrade(convertDatesToISOString(trade));
         } catch (err) {
           console.error("Error creating trade:", trade, err);
-          throw err;
+          // Provide more specific error message
+          if (err instanceof Error) {
+            throw new Error(`Failed to create trade for ${trade.symbol}: ${err.message}`);
+          } else {
+            throw new Error(`Failed to create trade for ${trade.symbol}: Unknown error`);
+          }
         }
       }
       

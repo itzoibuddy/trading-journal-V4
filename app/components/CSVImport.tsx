@@ -202,7 +202,20 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                 
                 // Parse date from broker format
                 const dateTimeParts = timeValue.split(' ');
-                const entryDate = dateTimeParts.length === 2 ? timeValue.replace(' ', 'T') : timeValue;
+                let entryDate = dateTimeParts.length === 2 ? timeValue.replace(' ', 'T') : timeValue;
+                
+                // Ensure the date is in ISO format
+                try {
+                  const parsedDate = new Date(entryDate);
+                  if (isNaN(parsedDate.getTime())) {
+                    // If date parsing fails, use current date
+                    entryDate = new Date().toISOString();
+                  } else {
+                    entryDate = parsedDate.toISOString();
+                  }
+                } catch (e) {
+                  entryDate = new Date().toISOString();
+                }
                 
                 // Determine instrument type from the instrument name
                 let instrumentType: 'STOCK' | 'FUTURES' | 'OPTIONS' = 'STOCK';
@@ -231,7 +244,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                   entryPrice: price,
                   exitPrice: null,
                   quantity,
-                  strikePrice,
+                  strikePrice: strikePrice > 0 ? strikePrice : null,
                   expiryDate: expiryDate,
                   optionType: finalOptionType,
                   entryDate,
@@ -239,6 +252,19 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                   profitLoss: null,
                   notes: `${instrumentValue} ${typeValue} @ ${price} (Strike: ${strikePrice}, Qty: ${quantity} = ${lots} lots)`,
                   sector: 'Index',
+                  strategy: null,
+                  setupImageUrl: null,
+                  preTradeEmotion: null,
+                  postTradeEmotion: null,
+                  tradeConfidence: null,
+                  tradeRating: null,
+                  lessons: null,
+                  riskRewardRatio: null,
+                  stopLoss: null,
+                  targetPrice: null,
+                  timeFrame: null,
+                  marketCondition: null,
+                  premium: null,
                 });
               } else {
                 // Original app format handling
@@ -278,6 +304,51 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                 const sector = row.sector || '';
                 const expiryDate = row.expirydate || row['expiry date'] || row.expiryDate || null;
                 
+                // Ensure proper date formatting for original format
+                let formattedEntryDate = entryDate;
+                let formattedExitDate = exitDate;
+                
+                try {
+                  const entryDateObj = new Date(entryDate);
+                  if (isNaN(entryDateObj.getTime())) {
+                    formattedEntryDate = new Date().toISOString();
+                  } else {
+                    formattedEntryDate = entryDateObj.toISOString();
+                  }
+                } catch (e) {
+                  formattedEntryDate = new Date().toISOString();
+                }
+                
+                if (exitDate) {
+                  try {
+                    const exitDateObj = new Date(exitDate);
+                    if (isNaN(exitDateObj.getTime())) {
+                      formattedExitDate = null;
+                    } else {
+                      formattedExitDate = exitDateObj.toISOString();
+                    }
+                  } catch (e) {
+                    formattedExitDate = null;
+                  }
+                } else {
+                  formattedExitDate = null;
+                }
+                
+                // Ensure proper expiry date formatting
+                let formattedExpiryDate = expiryDate;
+                if (expiryDate) {
+                  try {
+                    const expiryDateObj = new Date(expiryDate);
+                    if (isNaN(expiryDateObj.getTime())) {
+                      formattedExpiryDate = null;
+                    } else {
+                      formattedExpiryDate = expiryDateObj.toISOString().split('T')[0]; // Date only
+                    }
+                  } catch (e) {
+                    formattedExpiryDate = null;
+                  }
+                }
+                
                 imported.push({
                   symbol,
                   type: type.toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG',
@@ -285,14 +356,27 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                   entryPrice: parseFloat(entryPrice),
                   exitPrice,
                   quantity: parseFloat(quantity),
-                  strikePrice,
-                  expiryDate,
+                  strikePrice: strikePrice && strikePrice > 0 ? strikePrice : null,
+                  expiryDate: formattedExpiryDate,
                   optionType: optionType === 'PUT' ? 'PUT' : optionType === 'CALL' ? 'CALL' : null,
-                  entryDate,
-                  exitDate,
+                  entryDate: formattedEntryDate,
+                  exitDate: formattedExitDate,
                   profitLoss,
                   notes,
                   sector,
+                  strategy: null,
+                  setupImageUrl: null,
+                  preTradeEmotion: null,
+                  postTradeEmotion: null,
+                  tradeConfidence: null,
+                  tradeRating: null,
+                  lessons: null,
+                  riskRewardRatio: null,
+                  stopLoss: null,
+                  targetPrice: null,
+                  timeFrame: null,
+                  marketCondition: null,
+                  premium: null,
                 });
               }
             }
@@ -310,14 +394,20 @@ export default function CSVImport({ onImport }: CSVImportProps) {
             console.log("Processed trades with P/L:", processedTrades);
             
             // Import the trades
-            await onImport(processedTrades);
-            
-            setImportMessage(`Successfully imported ${processedTrades.length} trades!`);
-            setTimeout(() => setImportMessage(null), 4000);
-            setShowImportModal(false);
-            setCsvFile(null);
-            setCsvPreview([]);
-            setIsImporting(false);
+            try {
+              console.log("About to import trades:", processedTrades);
+              await onImport(processedTrades);
+              
+              setImportMessage(`Successfully imported ${processedTrades.length} trades!`);
+              setTimeout(() => setImportMessage(null), 4000);
+              setShowImportModal(false);
+              setCsvFile(null);
+              setCsvPreview([]);
+              setIsImporting(false);
+            } catch (importError) {
+              console.error("Error during trade import:", importError);
+              throw new Error(`Import failed: ${importError instanceof Error ? importError.message : 'Unknown import error'}`);
+            }
           } catch (err) {
             console.error("Error in CSV import process:", err);
             setError(`Failed to import trades: ${err instanceof Error ? err.message : 'Unknown error'}`);
