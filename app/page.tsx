@@ -149,7 +149,7 @@ export default function HomePage() {
     {
       title: "Total P&L",
       value: formatCurrency(totalPnL),
-      icon: "💰",
+      icon: "💲",
       gradient: totalPnL >= 0 ? "from-green-400 to-emerald-600" : "from-red-400 to-pink-600",
       bgGradient: totalPnL >= 0 ? "from-green-50 to-emerald-50" : "from-red-50 to-pink-50",
       change: totalPnL >= 0 ? "+12.5%" : "-5.2%",
@@ -158,7 +158,7 @@ export default function HomePage() {
     {
       title: "Win Rate",
       value: `${winRate.toFixed(1)}%`,
-      icon: "🎯",
+      icon: "🏹",
       gradient: "from-blue-400 to-indigo-600",
       bgGradient: "from-blue-50 to-indigo-50",
       change: "+2.1%",
@@ -176,7 +176,7 @@ export default function HomePage() {
     {
       title: "Open Positions",
       value: openTrades.length.toString(),
-      icon: "⏳",
+      icon: "🔄",
       gradient: "from-amber-400 to-orange-600",
       bgGradient: "from-amber-50 to-orange-50",
       change: openTrades.length > 0 ? "Active" : "None",
@@ -465,4 +465,6 @@ export default function HomePage() {
       `}</style>
     </div>
   );
-}
+}  
+ 
+ 
