@@ -157,19 +157,33 @@ export default function TradesPage() {
     if (!trades[index]?.id) return;
     
     const tradeSymbol = trades[index].symbol;
+    const tradeId = trades[index].id;
     setIsDeleting(true);
+    setError(null); // Clear any existing errors
     
     try {
-      await deleteTrade(trades[index].id!);
-      setTrades(trades.filter((_, i) => i !== index));
+      console.log(`Attempting to delete trade with ID: ${tradeId} (${tradeSymbol})`);
+      await deleteTrade(tradeId!);
+      console.log(`Successfully deleted trade with ID: ${tradeId}`);
+      
+      // Reload all trades from server instead of filtering locally
+      console.log('Reloading trades from server...');
+      const updatedTrades = await getTrades();
+      console.log(`Loaded ${updatedTrades.length} trades after deletion`);
+      
+      setTrades(updatedTrades.map(trade => convertDatesToISOString({
+        ...trade,
+        type: trade.type as 'LONG' | 'SHORT',
+        instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
+      })));
       
       // Show success message
-      setDeleteMessage(`Trade ${tradeSymbol} deleted successfully!`);
-      setTimeout(() => setDeleteMessage(null), 3000);
+      setDeleteMessage(`✅ Trade "${tradeSymbol}" deleted successfully! Total trades: ${updatedTrades.length}`);
+      setTimeout(() => setDeleteMessage(null), 5000);
       
     } catch (error) {
       console.error("Error deleting trade:", error);
-      setError("Failed to delete trade. Please try again.");
+      setError(`Failed to delete trade "${tradeSymbol}". Please try again.`);
     } finally {
       setIsDeleting(false);
     }
