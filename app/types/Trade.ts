@@ -18,6 +18,7 @@ export interface Trade {
   // Advanced journal fields
   strategy?: string | null;
   lessons?: string | null;
+  lessonsLearned?: string | null;
   riskRewardRatio?: number | null;
   stopLoss?: number | null;
   targetPrice?: number | null;
@@ -26,8 +27,11 @@ export interface Trade {
   preTradeEmotion?: string | null;
   postTradeEmotion?: string | null;
   tradeConfidence?: number | null;
+  confidenceLevel?: number | null;
   tradeRating?: number | null;
+  rating?: number | null;
   setupImageUrl?: string | null;
+  setupDescription?: string | null;
   sector?: string | null;
 
   createdAt?: string | Date;
@@ -57,6 +61,7 @@ export interface ApiTrade {
   // Advanced journal fields
   strategy?: string | null;
   lessons?: string | null;
+  lessonsLearned?: string | null;
   riskRewardRatio?: number | null;
   stopLoss?: number | null;
   targetPrice?: number | null;
@@ -65,8 +70,11 @@ export interface ApiTrade {
   preTradeEmotion?: string | null;
   postTradeEmotion?: string | null;
   tradeConfidence?: number | null;
+  confidenceLevel?: number | null;
   tradeRating?: number | null;
+  rating?: number | null;
   setupImageUrl?: string | null;
+  setupDescription?: string | null;
   sector?: string | null;
 
   createdAt?: string;

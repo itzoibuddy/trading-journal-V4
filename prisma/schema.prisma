@@ -35,11 +35,15 @@ model Trade {
   // New fields for enhanced features
   strategy        String?  // Strategy name/tag
   setupImageUrl   String?  // URL to trade setup screenshot
+  setupDescription String? // Description of the trade setup
   preTradeEmotion String?  // Emotional state before trade
   postTradeEmotion String? // Emotional state after trade
   tradeConfidence Int?     // Confidence level (1-10)
+  confidenceLevel Int?     // Alternative field name for confidence (1-10)
   tradeRating     Int?     // Self-rating of trade execution (1-10)
+  rating          Int?     // Alternative field name for rating (1-5)
   lessons         String?  // Lessons learned from the trade
+  lessonsLearned  String?  // Alternative field name for lessons learned
   riskRewardRatio Float?   // Planned risk-reward ratio
   stopLoss        Float?   // Initial stop loss price
   targetPrice     Float?   // Initial target price
