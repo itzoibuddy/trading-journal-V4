@@ -300,59 +300,114 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
-                <span className="text-lg">📅</span>
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Trading Calendar</h1>
-                <p className="text-sm text-gray-600">Track your daily performance and trading patterns</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              {/* View Mode Toggle */}
-              <div className="bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setViewMode('full')}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                    viewMode === 'full' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  Full
-                </button>
-                <button
-                  onClick={() => setViewMode('compact')}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                    viewMode === 'compact' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  Compact
-                </button>
-              </div>
-              
-              {/* Today Button */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
+            📊 Trading Calendar
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-2">Track your trading performance and identify profitable patterns</p>
+        </div>
+
+        {/* View Mode Toggles - Mobile Optimized */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/60 p-2">
+            <div className="flex space-x-1">
+              <button
+                onClick={() => setViewMode('full')}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  viewMode === 'full' 
+                    ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Full
+              </button>
+              <button
+                onClick={() => setViewMode('compact')}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  viewMode === 'compact' 
+                    ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Compact
+              </button>
               <button
                 onClick={goToToday}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all duration-200"
               >
                 Today
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Monthly Stats - Mobile Responsive Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-3 sm:p-4 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Total P&L</p>
+                <p className={`text-base sm:text-xl lg:text-2xl font-bold ${monthlyStats.totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {monthlyStats.totalPL >= 0 ? '+' : ''}₹{formatNumber(monthlyStats.totalPL)}
+                </p>
+                <p className="text-xs text-gray-500">{monthlyStats.totalTrades} trades</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <span className="text-sm sm:text-lg">💰</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-3 sm:p-4 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Win Rate</p>
+                <p className="text-base sm:text-xl lg:text-2xl font-bold text-blue-600">
+                  {monthlyStats.tradingDays > 0 ? Math.round((monthlyStats.winningDays / monthlyStats.tradingDays) * 100) : 0}%
+                </p>
+                <p className="text-xs text-gray-500">{monthlyStats.winningDays} winning days</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                <span className="text-sm sm:text-lg">🎯</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-3 sm:p-4 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Best Day</p>
+                <p className="text-base sm:text-xl lg:text-2xl font-bold text-green-600">
+                  +₹{formatNumber(monthlyStats.bestDay)}
+                </p>
+                <p className="text-xs text-gray-500">{monthlyStats.winStreak} day streak</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-green-100 rounded-full">
+                <span className="text-sm sm:text-lg">🔥</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-3 sm:p-4 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Avg Daily P&L</p>
+                <p className={`text-base sm:text-xl lg:text-2xl font-bold ${monthlyStats.avgDailyPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {monthlyStats.avgDailyPL >= 0 ? '+' : ''}₹{formatNumber(monthlyStats.avgDailyPL)}
+                </p>
+                <p className="text-xs text-gray-500">{monthlyStats.tradingDays} trading days</p>
+              </div>
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-full">
+                <span className="text-sm sm:text-lg">⚡</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {error && (
           <div className="mb-6 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 shadow-sm">
             <div className="flex justify-between items-center">
@@ -372,76 +427,14 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {/* Monthly Stats Overview */}
-        <div className="mb-8 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Monthly P&L</p>
-                <p className={`text-xl sm:text-2xl font-bold ${monthlyStats.totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {monthlyStats.totalPL >= 0 ? '+' : ''}₹{formatNumber(monthlyStats.totalPL)}
-                </p>
-              </div>
-              <div className={`p-3 rounded-full ${monthlyStats.totalPL >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                <span className="text-lg">{monthlyStats.totalPL >= 0 ? '📈' : '📉'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Win Rate</p>
-                <p className="text-xl sm:text-2xl font-bold text-blue-600">
-                  {monthlyStats.tradingDays > 0 ? Math.round((monthlyStats.winningDays / monthlyStats.tradingDays) * 100) : 0}%
-                </p>
-                <p className="text-xs text-gray-500">{monthlyStats.winningDays}W / {monthlyStats.losingDays}L</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <span className="text-lg">🎯</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Best Day</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-600">
-                  +₹{formatNumber(monthlyStats.bestDay)}
-                </p>
-                <p className="text-xs text-gray-500">{monthlyStats.winStreak} day streak</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <span className="text-lg">🔥</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Avg Daily P&L</p>
-                <p className={`text-xl sm:text-2xl font-bold ${monthlyStats.avgDailyPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {monthlyStats.avgDailyPL >= 0 ? '+' : ''}₹{formatNumber(monthlyStats.avgDailyPL)}
-                </p>
-                <p className="text-xs text-gray-500">{monthlyStats.tradingDays} trading days</p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <span className="text-lg">⚡</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Calendar Navigation */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6 mb-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
             <button
               onClick={navigateToPreviousMonth}
-              className="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 font-medium hover:shadow-md order-1 sm:order-none"
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 rounded-xl transition-all duration-200 font-medium hover:shadow-md order-1 sm:order-none min-w-[120px] justify-center"
             >
-              <span className="mr-2">←</span> Previous
+              <span className="mr-2 text-lg">←</span> Previous
             </button>
             
             <div className="text-center order-0 sm:order-none">
@@ -453,9 +446,9 @@ export default function CalendarPage() {
             
             <button
               onClick={navigateToNextMonth}
-              className="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 font-medium hover:shadow-md order-2 sm:order-none"
+              className="flex items-center px-6 py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 rounded-xl transition-all duration-200 font-medium hover:shadow-md order-2 sm:order-none min-w-[120px] justify-center"
             >
-              Next <span className="ml-2">→</span>
+              Next <span className="ml-2 text-lg">→</span>
             </button>
           </div>
 
@@ -471,7 +464,7 @@ export default function CalendarPage() {
                 ? ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
                 : ["", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
               ).map((d, idx) => (
-                <div key={idx} className="text-center py-2">
+                <div key={idx} className="text-center py-2 sm:py-3">
                   <span className="text-xs sm:text-sm font-semibold text-gray-600">{d}</span>
                 </div>
               ))}
@@ -485,7 +478,7 @@ export default function CalendarPage() {
                   <div key={weekIdx} className="contents">
                     {viewMode === 'full' && (
                       /* Week total */
-                      <div className="flex items-center justify-center bg-blue-50 rounded-lg border border-blue-200 h-12 sm:h-16">
+                      <div className="flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 h-16 sm:h-20">
                         <div className="text-center">
                           <div className="text-xs font-medium text-blue-800">W{weekIdx + 1}</div>
                           <div className={`text-xs sm:text-sm font-bold ${
@@ -498,10 +491,10 @@ export default function CalendarPage() {
                       </div>
                     )}
                     
-                    {/* Days in week */}
+                    {/* Days in week - Mobile Optimized */}
                     {weekDays.map((date, dayIdx) => {
                       if (!date) {
-                        return <div key={`empty-${weekIdx}-${dayIdx}`} className="h-12 sm:h-16" />;
+                        return <div key={`empty-${weekIdx}-${dayIdx}`} className="h-16 sm:h-20" />;
                       }
 
                       const dayStr = formatDateForComparison(date);
@@ -540,15 +533,15 @@ export default function CalendarPage() {
                         <button
                           key={dayIdx}
                           onClick={() => handleDateClick(date)}
-                          className={`h-12 sm:h-16 border rounded-lg hover:ring-2 hover:ring-blue-300 hover:shadow-md transition-all duration-200 ${bgClass} flex flex-col items-center justify-center p-1 relative group`}
+                          className={`h-16 sm:h-20 border rounded-lg hover:ring-2 hover:ring-blue-300 hover:shadow-md transition-all duration-200 ${bgClass} flex flex-col items-center justify-center p-1 relative group touch-manipulation`}
                           title={count > 0 ? `${count} trades • P&L: ₹${formatNumber(pl)}` : ''}
                         >
-                          <span className="font-bold text-xs sm:text-sm">
+                          <span className="font-bold text-sm sm:text-base">
                             {date.getDate()}
                           </span>
                           {!isWeekend && !isHoliday && count > 0 && (
                             <>
-                              <span className="text-xs font-medium">
+                              <span className="text-xs sm:text-sm font-medium leading-tight">
                                 ₹{formatNumber(Math.abs(pl))}
                               </span>
                               {viewMode === 'full' && (
@@ -559,7 +552,7 @@ export default function CalendarPage() {
                             </>
                           )}
                           {isHoliday && (
-                            <span className="text-xs">🏛️</span>
+                            <span className="text-xs sm:text-sm">🏛️</span>
                           )}
                           {isCurrentDay && (
                             <div className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full"></div>
@@ -575,10 +568,10 @@ export default function CalendarPage() {
         </div>
 
         {/* Selected Day Details */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-6">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/60 p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                 {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : ''}
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -586,16 +579,16 @@ export default function CalendarPage() {
               </p>
             </div>
             {dayTrades.length > 0 && (
-              <div className="flex items-center space-x-6">
-                <div className="text-right">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 w-full sm:w-auto">
+                <div className="text-left sm:text-right">
                   <p className="text-sm text-gray-600">Day P&L</p>
-                  <p className={`text-lg font-bold ${getDayPL(dayTrades) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-lg sm:text-xl font-bold ${getDayPL(dayTrades) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {getDayPL(dayTrades) >= 0 ? '+' : ''}₹{formatNumber(getDayPL(dayTrades))}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <p className="text-sm text-gray-600">Win Rate</p>
-                  <p className="text-lg font-bold text-blue-600">
+                  <p className="text-lg sm:text-xl font-bold text-blue-600">
                     {Math.round((dayTrades.filter(t => (t.profitLoss || 0) > 0).length / dayTrades.length) * 100)}%
                   </p>
                 </div>
