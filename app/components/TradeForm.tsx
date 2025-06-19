@@ -212,278 +212,294 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
   };
 
   return (
-    <div className="bg-white shadow rounded-xl p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">{initialData?.id !== undefined ? 'Edit Trade' : 'Add New Trade'}</h3>
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-2xl p-8 shadow-lg border border-white/20">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
         {/* Basic Trade Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Symbol */}
-          <div>
-            <label htmlFor="symbol" className="block text-sm font-medium text-gray-700">Symbol *</label>
-            <input
-              type="text"
-              id="symbol"
-              {...register('symbol')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="e.g., NIFTY, RELIANCE"
-            />
-            {errors.symbol && <p className="mt-1 text-sm text-red-600">{errors.symbol.message}</p>}
-          </div>
+        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
+            📊 Basic Trade Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Symbol */}
+            <div>
+              <label htmlFor="symbol" className="block text-sm font-semibold text-gray-700 mb-2">Symbol *</label>
+              <input
+                type="text"
+                id="symbol"
+                {...register('symbol')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="e.g., NIFTY, RELIANCE"
+              />
+              {errors.symbol && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.symbol.message}</p>}
+            </div>
 
-          {/* Trade Type */}
-          <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700">Trade Type *</label>
-            <select
-              id="type"
-              {...register('type')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="LONG">LONG</option>
-              <option value="SHORT">SHORT</option>
-            </select>
-            {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
-          </div>
+            {/* Trade Type */}
+            <div>
+              <label htmlFor="type" className="block text-sm font-semibold text-gray-700 mb-2">Trade Type *</label>
+              <select
+                id="type"
+                {...register('type')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+              >
+                <option value="LONG">LONG</option>
+                <option value="SHORT">SHORT</option>
+              </select>
+              {errors.type && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.type.message}</p>}
+            </div>
 
-          {/* Instrument Type */}
-          <div>
-            <label htmlFor="instrumentType" className="block text-sm font-medium text-gray-700">Instrument Type *</label>
-            <select
-              id="instrumentType"
-              {...register('instrumentType')}
-              onChange={(e) => setSelectedInstrumentType(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="STOCK">STOCK</option>
-              <option value="FUTURES">FUTURES</option>
-              <option value="OPTIONS">OPTIONS</option>
-            </select>
-            {errors.instrumentType && <p className="mt-1 text-sm text-red-600">{errors.instrumentType.message}</p>}
+            {/* Instrument Type */}
+            <div>
+              <label htmlFor="instrumentType" className="block text-sm font-semibold text-gray-700 mb-2">Instrument Type *</label>
+              <select
+                id="instrumentType"
+                {...register('instrumentType')}
+                onChange={(e) => setSelectedInstrumentType(e.target.value)}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+              >
+                <option value="STOCK">STOCK</option>
+                <option value="FUTURES">FUTURES</option>
+                <option value="OPTIONS">OPTIONS</option>
+              </select>
+              {errors.instrumentType && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.instrumentType.message}</p>}
+            </div>
           </div>
+        </div>
 
-          {/* Entry Price */}
-          <div>
-            <label htmlFor="entryPrice" className="block text-sm font-medium text-gray-700">Entry Price *</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              id="entryPrice"
-              {...register('entryPrice', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  // Force 2 decimal places as user types
-                  const value = parseFloat(e.target.value);
-                  if (!isNaN(value)) {
-                    const formattedValue = parseFloat(value.toFixed(2));
-                    if (formattedValue !== value) {
-                      setValue('entryPrice', formattedValue);
-                    }
-                  }
-                }
-              })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="0.00"
-              onBlur={(e) => {
-                // Format on blur to ensure 2 decimal places
-                const value = parseFloat(e.target.value);
-                if (!isNaN(value)) {
-                  e.target.value = value.toFixed(2);
-                  setValue('entryPrice', parseFloat(value.toFixed(2)));
-                }
-              }}
-            />
-            {errors.entryPrice && <p className="mt-1 text-sm text-red-600">{errors.entryPrice.message}</p>}
-          </div>
-
-          {/* Exit Price */}
-          <div>
-            <label htmlFor="exitPrice" className="block text-sm font-medium text-gray-700">Exit Price</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              id="exitPrice"
-              {...register('exitPrice', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  // Force 2 decimal places as user types
-                  const value = parseFloat(e.target.value);
-                  if (!isNaN(value)) {
-                    const formattedValue = parseFloat(value.toFixed(2));
-                    if (formattedValue !== value) {
-                      setValue('exitPrice', formattedValue);
-                    }
-                  }
-                } 
-              })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="0.00"
-              onBlur={(e) => {
-                // Format on blur to ensure 2 decimal places
-                const value = parseFloat(e.target.value);
-                if (!isNaN(value)) {
-                  e.target.value = value.toFixed(2);
-                  setValue('exitPrice', parseFloat(value.toFixed(2)));
-                }
-              }}
-            />
-            {errors.exitPrice && <p className="mt-1 text-sm text-red-600">{errors.exitPrice.message}</p>}
-          </div>
-
-          {/* Quantity */}
-          <div>
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Quantity *</label>
-            <input
-              type="number"
-              step="1"
-              id="quantity"
-              {...register('quantity', { valueAsNumber: true })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="0"
-            />
-            {errors.quantity && <p className="mt-1 text-sm text-red-600">{errors.quantity.message}</p>}
-          </div>
-
-          {/* Entry Date */}
-          <div>
-            <label htmlFor="entryDate" className="block text-sm font-medium text-gray-700">Entry Date & Time *</label>
-            <input
-              type="datetime-local"
-              id="entryDate"
-              {...register('entryDate')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-            {errors.entryDate && <p className="mt-1 text-sm text-red-600">{errors.entryDate.message}</p>}
-          </div>
-
-          {/* Exit Date */}
-          <div>
-            <label htmlFor="exitDate" className="block text-sm font-medium text-gray-700">Exit Date & Time</label>
-            <input
-              type="datetime-local"
-              id="exitDate"
-              {...register('exitDate')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-            {errors.exitDate && <p className="mt-1 text-sm text-red-600">{errors.exitDate.message}</p>}
-          </div>
-
-          {/* Sector */}
-          <div>
-            <label htmlFor="sector" className="block text-sm font-medium text-gray-700">Sector</label>
-            <input
-              type="text"
-              id="sector"
-              {...register('sector')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="e.g., Technology, Banking"
-            />
-            {errors.sector && <p className="mt-1 text-sm text-red-600">{errors.sector.message}</p>}
-          </div>
-
-          {/* Options/Futures specific fields */}
-          {selectedInstrumentType === 'OPTIONS' && (
-            <>
-              {/* Strike Price */}
-              <div>
-                <label htmlFor="strikePrice" className="block text-sm font-medium text-gray-700">Strike Price *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  id="strikePrice"
-                  {...register('strikePrice', { 
-                    valueAsNumber: true,
-                    onChange: (e) => {
-                      // Force 2 decimal places as user types
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value)) {
-                        const formattedValue = parseFloat(value.toFixed(2));
-                        if (formattedValue !== value) {
-                          setValue('strikePrice', formattedValue);
-                        }
-                      }
-                    }
-                  })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="0.00"
-                  onBlur={(e) => {
-                    // Format on blur to ensure 2 decimal places
+        {/* Price & Quantity Information */}
+        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
+            💰 Price & Quantity
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Entry Price */}
+            <div>
+              <label htmlFor="entryPrice" className="block text-sm font-semibold text-gray-700 mb-2">Entry Price *</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                id="entryPrice"
+                {...register('entryPrice', { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
-                      e.target.value = value.toFixed(2);
-                      setValue('strikePrice', parseFloat(value.toFixed(2)));
+                      const formattedValue = parseFloat(value.toFixed(2));
+                      if (formattedValue !== value) {
+                        setValue('entryPrice', formattedValue);
+                      }
                     }
-                  }}
-                />
-                {errors.strikePrice && <p className="mt-1 text-sm text-red-600">{errors.strikePrice.message}</p>}
-              </div>
+                  }
+                })}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="0.00"
+                onBlur={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value)) {
+                    e.target.value = value.toFixed(2);
+                    setValue('entryPrice', parseFloat(value.toFixed(2)));
+                  }
+                }}
+              />
+              {errors.entryPrice && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.entryPrice.message}</p>}
+            </div>
 
-              {/* Option Type */}
-              <div>
-                <label htmlFor="optionType" className="block text-sm font-medium text-gray-700">Option Type *</label>
-                <select
-                  id="optionType"
-                  {...register('optionType')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                >
-                  <option value="CALL">CALL</option>
-                  <option value="PUT">PUT</option>
-                </select>
-                {errors.optionType && <p className="mt-1 text-sm text-red-600">{errors.optionType.message}</p>}
-              </div>
-
-              {/* Expiry Date */}
-              <div>
-                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">Expiry Date *</label>
-                <input
-                  type="date"
-                  id="expiryDate"
-                  {...register('expiryDate')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
-                {errors.expiryDate && <p className="mt-1 text-sm text-red-600">{errors.expiryDate.message}</p>}
-              </div>
-            </>
-          )}
-
-          {selectedInstrumentType === 'FUTURES' && (
+            {/* Exit Price */}
             <div>
-              <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">Expiry Date *</label>
+              <label htmlFor="exitPrice" className="block text-sm font-semibold text-gray-700 mb-2">Exit Price</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                id="exitPrice"
+                {...register('exitPrice', { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      const formattedValue = parseFloat(value.toFixed(2));
+                      if (formattedValue !== value) {
+                        setValue('exitPrice', formattedValue);
+                      }
+                    }
+                  } 
+                })}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="0.00"
+                onBlur={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value)) {
+                    e.target.value = value.toFixed(2);
+                    setValue('exitPrice', parseFloat(value.toFixed(2)));
+                  }
+                }}
+              />
+              {errors.exitPrice && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.exitPrice.message}</p>}
+            </div>
+
+            {/* Quantity */}
+            <div>
+              <label htmlFor="quantity" className="block text-sm font-semibold text-gray-700 mb-2">Quantity *</label>
+              <input
+                type="number"
+                step="1"
+                id="quantity"
+                {...register('quantity', { valueAsNumber: true })}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="0"
+              />
+              {errors.quantity && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.quantity.message}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Date & Time Information */}
+        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
+            📅 Date & Time
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Entry Date */}
+            <div>
+              <label htmlFor="entryDate" className="block text-sm font-semibold text-gray-700 mb-2">Entry Date & Time *</label>
+              <input
+                type="datetime-local"
+                id="entryDate"
+                {...register('entryDate')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+              />
+              {errors.entryDate && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.entryDate.message}</p>}
+            </div>
+
+            {/* Exit Date */}
+            <div>
+              <label htmlFor="exitDate" className="block text-sm font-semibold text-gray-700 mb-2">Exit Date & Time</label>
+              <input
+                type="datetime-local"
+                id="exitDate"
+                {...register('exitDate')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+              />
+              {errors.exitDate && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.exitDate.message}</p>}
+            </div>
+
+            {/* Sector */}
+            <div>
+              <label htmlFor="sector" className="block text-sm font-semibold text-gray-700 mb-2">Sector</label>
+              <input
+                type="text"
+                id="sector"
+                {...register('sector')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="e.g., Technology, Banking"
+              />
+              {errors.sector && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.sector.message}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Options/Futures specific fields */}
+        {selectedInstrumentType === 'OPTIONS' && (
+          <>
+            {/* Strike Price */}
+            <div>
+              <label htmlFor="strikePrice" className="block text-sm font-semibold text-gray-700 mb-2">Strike Price *</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                id="strikePrice"
+                {...register('strikePrice', { 
+                  valueAsNumber: true,
+                  onChange: (e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value)) {
+                      const formattedValue = parseFloat(value.toFixed(2));
+                      if (formattedValue !== value) {
+                        setValue('strikePrice', formattedValue);
+                      }
+                    }
+                  }
+                })}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="0.00"
+                onBlur={(e) => {
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value)) {
+                    e.target.value = value.toFixed(2);
+                    setValue('strikePrice', parseFloat(value.toFixed(2)));
+                  }
+                }}
+              />
+              {errors.strikePrice && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.strikePrice.message}</p>}
+            </div>
+
+            {/* Option Type */}
+            <div>
+              <label htmlFor="optionType" className="block text-sm font-semibold text-gray-700 mb-2">Option Type *</label>
+              <select
+                id="optionType"
+                {...register('optionType')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+              >
+                <option value="CALL">CALL</option>
+                <option value="PUT">PUT</option>
+              </select>
+              {errors.optionType && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.optionType.message}</p>}
+            </div>
+
+            {/* Expiry Date */}
+            <div>
+              <label htmlFor="expiryDate" className="block text-sm font-semibold text-gray-700 mb-2">Expiry Date *</label>
               <input
                 type="date"
                 id="expiryDate"
                 {...register('expiryDate')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               />
-              {errors.expiryDate && <p className="mt-1 text-sm text-red-600">{errors.expiryDate.message}</p>}
+              {errors.expiryDate && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.expiryDate.message}</p>}
             </div>
-          )}
-        </div>
+          </>
+        )}
+
+        {selectedInstrumentType === 'FUTURES' && (
+          <div>
+            <label htmlFor="expiryDate" className="block text-sm font-semibold text-gray-700 mb-2">Expiry Date *</label>
+            <input
+              type="date"
+              id="expiryDate"
+              {...register('expiryDate')}
+              className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+            />
+            {errors.expiryDate && <p className="mt-2 text-sm text-red-600 flex items-center"><span className="mr-1">⚠️</span>{errors.expiryDate.message}</p>}
+          </div>
+        )}
 
         {/* Advanced Trade Analysis */}
-        <div className="mt-8">
-          <h4 className="text-md font-medium text-gray-700 mb-4">Trade Analysis</h4>
+        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
+            📊 Trade Analysis
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Strategy */}
             <div>
-              <label htmlFor="strategy" className="block text-sm font-medium text-gray-700">Strategy</label>
+              <label htmlFor="strategy" className="block text-sm font-semibold text-gray-700 mb-2">Strategy</label>
               <input
                 type="text"
                 id="strategy"
                 {...register('strategy')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="e.g., Breakout, Reversal"
               />
             </div>
 
             {/* Time Frame */}
             <div>
-              <label htmlFor="timeFrame" className="block text-sm font-medium text-gray-700">Time Frame</label>
+              <label htmlFor="timeFrame" className="block text-sm font-semibold text-gray-700 mb-2">Time Frame</label>
               <select
                 id="timeFrame"
                 {...register('timeFrame')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value="">Select Time Frame</option>
                 {TIME_FRAMES.map(frame => (
@@ -494,11 +510,11 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Market Condition */}
             <div>
-              <label htmlFor="marketCondition" className="block text-sm font-medium text-gray-700">Market Condition</label>
+              <label htmlFor="marketCondition" className="block text-sm font-semibold text-gray-700 mb-2">Market Condition</label>
               <select
                 id="marketCondition"
                 {...register('marketCondition')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value="">Select Market Condition</option>
                 {MARKET_CONDITIONS.map(condition => (
@@ -509,7 +525,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Stop Loss */}
             <div>
-              <label htmlFor="stopLoss" className="block text-sm font-medium text-gray-700">Stop Loss</label>
+              <label htmlFor="stopLoss" className="block text-sm font-semibold text-gray-700 mb-2">Stop Loss</label>
               <input
                 type="number"
                 step="0.01"
@@ -518,7 +534,6 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('stopLoss', { 
                   valueAsNumber: true,
                   onChange: (e) => {
-                    // Force 2 decimal places as user types
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
                       const formattedValue = parseFloat(value.toFixed(2));
@@ -528,10 +543,9 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                     }
                   }
                 })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="0.00"
                 onBlur={(e) => {
-                  // Format on blur to ensure 2 decimal places
                   const value = parseFloat(e.target.value);
                   if (!isNaN(value)) {
                     e.target.value = value.toFixed(2);
@@ -543,7 +557,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Target Price */}
             <div>
-              <label htmlFor="targetPrice" className="block text-sm font-medium text-gray-700">Target Price</label>
+              <label htmlFor="targetPrice" className="block text-sm font-semibold text-gray-700 mb-2">Target Price</label>
               <input
                 type="number"
                 step="0.01"
@@ -552,7 +566,6 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('targetPrice', { 
                   valueAsNumber: true,
                   onChange: (e) => {
-                    // Force 2 decimal places as user types
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
                       const formattedValue = parseFloat(value.toFixed(2));
@@ -562,10 +575,9 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                     }
                   }
                 })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="0.00"
                 onBlur={(e) => {
-                  // Format on blur to ensure 2 decimal places
                   const value = parseFloat(e.target.value);
                   if (!isNaN(value)) {
                     e.target.value = value.toFixed(2);
@@ -577,7 +589,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Risk-Reward Ratio */}
             <div>
-              <label htmlFor="riskRewardRatio" className="block text-sm font-medium text-gray-700">Risk-Reward Ratio</label>
+              <label htmlFor="riskRewardRatio" className="block text-sm font-semibold text-gray-700 mb-2">Risk-Reward Ratio</label>
               <input
                 type="number"
                 step="0.01"
@@ -586,7 +598,6 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('riskRewardRatio', { 
                   valueAsNumber: true,
                   onChange: (e) => {
-                    // Force 2 decimal places as user types
                     const value = parseFloat(e.target.value);
                     if (!isNaN(value)) {
                       const formattedValue = parseFloat(value.toFixed(2));
@@ -596,7 +607,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                     }
                   }
                 })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="0.00"
                 readOnly
               />
@@ -604,11 +615,11 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Pre-Trade Emotion */}
             <div>
-              <label htmlFor="preTradeEmotion" className="block text-sm font-medium text-gray-700">Pre-Trade Emotion</label>
+              <label htmlFor="preTradeEmotion" className="block text-sm font-semibold text-gray-700 mb-2">Pre-Trade Emotion</label>
               <select
                 id="preTradeEmotion"
                 {...register('preTradeEmotion')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value="">Select Emotion</option>
                 {PRE_TRADE_EMOTIONS.map(emotion => (
@@ -619,11 +630,11 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Post-Trade Emotion */}
             <div>
-              <label htmlFor="postTradeEmotion" className="block text-sm font-medium text-gray-700">Post-Trade Emotion</label>
+              <label htmlFor="postTradeEmotion" className="block text-sm font-semibold text-gray-700 mb-2">Post-Trade Emotion</label>
               <select
                 id="postTradeEmotion"
                 {...register('postTradeEmotion')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value="">Select Emotion</option>
                 {POST_TRADE_EMOTIONS.map(emotion => (
@@ -634,40 +645,40 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
 
             {/* Trade Confidence */}
             <div>
-              <label htmlFor="tradeConfidence" className="block text-sm font-medium text-gray-700">Trade Confidence (1-10)</label>
+              <label htmlFor="tradeConfidence" className="block text-sm font-semibold text-gray-700 mb-2">Trade Confidence (1-10)</label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 id="tradeConfidence"
                 {...register('tradeConfidence', { valueAsNumber: true })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="1-10"
               />
             </div>
 
             {/* Trade Rating */}
             <div>
-              <label htmlFor="tradeRating" className="block text-sm font-medium text-gray-700">Trade Rating (1-10)</label>
+              <label htmlFor="tradeRating" className="block text-sm font-semibold text-gray-700 mb-2">Trade Rating (1-10)</label>
               <input
                 type="number"
                 min="1"
                 max="10"
                 id="tradeRating"
                 {...register('tradeRating', { valueAsNumber: true })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="1-10"
               />
             </div>
 
             {/* Setup Image URL */}
             <div>
-              <label htmlFor="setupImageUrl" className="block text-sm font-medium text-gray-700">Setup Image URL</label>
+              <label htmlFor="setupImageUrl" className="block text-sm font-semibold text-gray-700 mb-2">Setup Image URL</label>
               <input
                 type="url"
                 id="setupImageUrl"
                 {...register('setupImageUrl')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="https://example.com/image.jpg"
               />
             </div>
@@ -675,49 +686,61 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
         </div>
 
         {/* Notes and Lessons */}
-        <div className="mt-8">
-          <h4 className="text-md font-medium text-gray-700 mb-4">Notes & Lessons</h4>
+        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
+            📝 Notes & Lessons
+          </h3>
           <div className="grid grid-cols-1 gap-6">
             {/* Notes */}
             <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Trade Notes</label>
+              <label htmlFor="notes" className="block text-sm font-semibold text-gray-700 mb-2">Trade Notes</label>
               <textarea
                 id="notes"
                 rows={3}
                 {...register('notes')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="Any notes about the trade..."
               ></textarea>
             </div>
 
             {/* Lessons */}
             <div>
-              <label htmlFor="lessons" className="block text-sm font-medium text-gray-700">Lessons Learned</label>
+              <label htmlFor="lessons" className="block text-sm font-semibold text-gray-700 mb-2">Lessons Learned</label>
               <textarea
                 id="lessons"
                 rows={3}
                 {...register('lessons')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
                 placeholder="What did you learn from this trade?"
               ></textarea>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-4 pt-6">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-700 font-medium hover:bg-white hover:shadow-lg transition-all duration-300"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:bg-indigo-300"
+            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl font-medium hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Saving...' : initialData?.id !== undefined ? 'Update Trade' : 'Add Trade'}
+            {isSubmitting ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </span>
+            ) : (
+              `${initialData?.id !== undefined ? '✏️ Update Trade' : '✨ Add Trade'}`
+            )}
           </button>
         </div>
       </form>
