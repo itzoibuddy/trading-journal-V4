@@ -201,14 +201,25 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
     }
   }, [initialData, setValue]);
 
-  const handleFormSubmit = async (data: TradeFormData & { id?: number }) => {
-    const { id, ...formDataWithoutId } = data;
-    if (id !== undefined) {
-      await updateTrade(id, formDataWithoutId);
-    } else {
-      await createTrade(formDataWithoutId);
+  const handleFormSubmit = async (data: TradeFormData) => {
+    try {
+      console.log('Form data being submitted:', data);
+      console.log('Initial data ID:', initialData?.id);
+      
+      if (initialData?.id !== undefined) {
+        console.log('Updating trade with ID:', initialData.id);
+        await updateTrade(initialData.id, data);
+        console.log('Update successful');
+      } else {
+        console.log('Creating new trade');
+        await createTrade(data);
+        console.log('Create successful');
+      }
+      onSuccess();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Error submitting form: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
-    onSuccess();
   };
 
   return (
