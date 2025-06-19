@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Trade } from '../../types/Trade';
+import TradeModal from '../../components/TradeModal';
 
 export default function TradeDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const [trade, setTrade] = useState<Trade | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchTrade = async () => {
@@ -114,6 +116,23 @@ export default function TradeDetailsPage() {
     return 'text-gray-600';
   };
 
+  const handleTradeUpdate = () => {
+    // Refresh the trade data after update
+    const fetchTrade = async () => {
+      try {
+        const response = await fetch(`/api/trades/${params.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTrade(data);
+        }
+      } catch (error) {
+        console.error('Error fetching trade:', error);
+      }
+    };
+    fetchTrade();
+    setIsEditModalOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -172,7 +191,7 @@ export default function TradeDetailsPage() {
             
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => router.push(`/trades/${trade.id}/edit`)}
+                onClick={() => setIsEditModalOpen(true)}
                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 ✏️ Edit Trade
@@ -453,6 +472,43 @@ export default function TradeDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Trade Modal */}
+      <TradeModal
+        isOpen={isEditModalOpen}
+        onClose={handleTradeUpdate}
+        title="Edit Trade"
+        initialData={trade ? {
+          symbol: trade.symbol,
+          instrumentType: trade.instrumentType,
+          type: trade.type,
+          strategy: trade.strategy,
+          entryDate: typeof trade.entryDate === 'string' ? trade.entryDate : trade.entryDate.toISOString().split('T')[0],
+          exitDate: trade.exitDate ? (typeof trade.exitDate === 'string' ? trade.exitDate : trade.exitDate.toISOString().split('T')[0]) : null,
+          entryPrice: trade.entryPrice,
+          exitPrice: trade.exitPrice,
+          quantity: trade.quantity,
+          strikePrice: trade.strikePrice,
+          expiryDate: trade.expiryDate ? (typeof trade.expiryDate === 'string' ? trade.expiryDate : trade.expiryDate.toISOString().split('T')[0]) : null,
+          optionType: trade.optionType,
+          premium: trade.premium,
+          profitLoss: trade.profitLoss,
+          riskRewardRatio: trade.riskRewardRatio,
+          stopLoss: trade.stopLoss,
+          targetPrice: trade.targetPrice,
+          timeFrame: trade.timeFrame,
+          marketCondition: trade.marketCondition,
+          preTradeEmotion: trade.preTradeEmotion,
+          postTradeEmotion: trade.postTradeEmotion,
+          tradeConfidence: trade.tradeConfidence || trade.confidenceLevel,
+          tradeRating: trade.tradeRating || trade.rating,
+          notes: trade.notes,
+          lessons: trade.lessons || trade.lessonsLearned,
+          setupImageUrl: trade.setupImageUrl,
+          sector: trade.sector,
+          id: trade.id
+        } : undefined}
+      />
     </div>
   );
 } 
