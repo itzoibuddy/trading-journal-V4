@@ -221,7 +221,8 @@ export default function TradesPage() {
       const updatedTrades = await getTrades();
       setTrades(updatedTrades.map(trade => convertDatesToISOString({
         ...trade,
-        type: trade.type as 'LONG' | 'SHORT'
+        type: trade.type as 'LONG' | 'SHORT',
+        instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
       })));
       
       setImportMessage(`Successfully imported ${importedTrades.length} trades!`);
