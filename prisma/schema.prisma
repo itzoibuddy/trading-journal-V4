@@ -52,4 +52,13 @@ model Trade {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // Indexes for better query performance
+  @@index([symbol, entryDate])
+  @@index([entryDate])
+  @@index([exitDate])
+  @@index([instrumentType])
+  @@index([type])
+  @@index([profitLoss])
+  @@index([createdAt])
 } 

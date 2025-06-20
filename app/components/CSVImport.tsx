@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Papa from 'papaparse';
+import DOMPurify from 'dompurify';
 import { TradeFormData } from '../actions/trade';
 
 // Helper function for safe toISOString conversion
@@ -40,6 +41,20 @@ export default function CSVImport({ onImport }: CSVImportProps) {
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // File size validation (10MB limit)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      setError('File size exceeds 10MB limit');
+      return;
+    }
+    
+    // File type validation
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError('Please upload a CSV file');
+      return;
+    }
+    
     setCsvFile(file);
     
     // Preview the CSV
@@ -242,8 +257,11 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                 const lotSize = getLotSize(symbol);
                 const lots = lotSize > 1 ? Math.round(quantity / lotSize * 100) / 100 : quantity;
                 
+                // Sanitize string inputs
+                const sanitizedNotes = DOMPurify.sanitize(`${instrumentValue} ${typeValue} @ ${validatedPrice} (Strike: ${validatedStrikePrice || 'N/A'}, Qty: ${validatedQuantity} = ${lots} lots)`);
+                
                 imported.push({
-                  symbol: symbol || 'UNKNOWN',
+                  symbol: DOMPurify.sanitize(symbol || 'UNKNOWN'),
                   type: tradeType,
                   instrumentType,
                   entryPrice: validatedPrice,
@@ -255,7 +273,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                   entryDate,
                   exitDate: null,
                   profitLoss: null,
-                  notes: `${instrumentValue} ${typeValue} @ ${validatedPrice} (Strike: ${validatedStrikePrice || 'N/A'}, Qty: ${validatedQuantity} = ${lots} lots)`,
+                  notes: sanitizedNotes,
                   sector: 'Index',
                   strategy: null,
                   setupImageUrl: null,

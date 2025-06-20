@@ -1,6 +1,30 @@
 # Trading Journal 
 
-A comprehensive trading journal application for tracking and analyzing your trades.
+A comprehensive, production-ready trading journal application for tracking and analyzing your trades.
+
+## 🚀 Production Updates
+
+This application has been updated with critical production-ready features:
+
+### Security Enhancements
+- ✅ API rate limiting (100 requests/minute)
+- ✅ CORS configuration and security headers
+- ✅ Input sanitization with DOMPurify
+- ✅ Environment variable validation
+- ✅ Centralized error handling
+
+### Performance Improvements
+- ✅ Fixed database connection pooling with singleton pattern
+- ✅ Added pagination for all API endpoints (max 100 records per page)
+- ✅ Database indexes for faster queries
+- ✅ Optimized Docker build with health checks
+
+### Infrastructure & Quality
+- ✅ PostgreSQL configuration for production
+- ✅ Health check endpoint with database connectivity test
+- ✅ Jest test configuration with basic unit tests
+- ✅ TypeScript strict mode
+- ✅ Production-ready middleware
 
 ## Features
 
@@ -36,42 +60,74 @@ A comprehensive trading journal application for tracking and analyzing your trad
    npm install
    ```
 
-3. Set up the database
+3. Create a `.env` file based on `.env.example`:
+   ```bash
+   # Database
+   DATABASE_URL="postgresql://username:password@localhost:5432/trading_journal"
+   
+   # Authentication
+   NEXTAUTH_URL="http://localhost:3000"
+   NEXTAUTH_SECRET="your-secret-key-here"
+   
+   # API Security
+   ALLOWED_ORIGINS="http://localhost:3000"
+   ```
+
+4. Set up the database
    ```bash
    npx prisma migrate dev
    ```
 
-4. Start the development server
+5. Start the development server
    ```bash
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Database Configuration
 
-The application uses SQLite by default for development. To use PostgreSQL in production:
+The application is configured to use PostgreSQL by default. The schema includes:
+- Optimized indexes for query performance
+- Support for options and futures trading
+- Comprehensive trade tracking fields
 
-1. Edit `prisma/schema.prisma` and uncomment the PostgreSQL configuration
-2. Set the `DATABASE_URL` environment variable to your PostgreSQL connection string
+To switch between databases:
+- **PostgreSQL** (recommended for production): Set `DATABASE_URL` in your `.env` file
+- **SQLite** (for local development only): Update `prisma/schema.prisma` datasource
 
 ## Production Deployment
 
 ### Build for Production
 
 ```bash
-npm run build
-```
+# Install production dependencies
+npm ci --production
 
-This will:
-1. Run database migrations
-2. Generate the Prisma client
-3. Build the Next.js application
+# Run database migrations
+npm run db:migrate
+
+# Build the application
+npm run build:prod
+```
 
 ### Start the Production Server
 
 ```bash
-npm start
+npm run start:prod
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
 ```
 
 ### Deployment Options
@@ -119,3 +175,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Chart visualizations powered by Chart.js
 
 # Updated for deployment
+
