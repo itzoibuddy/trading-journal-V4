@@ -76,7 +76,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
           try {
             if (results.errors && results.errors.length > 0) {
               console.error("CSV parsing errors:", results.errors);
-              setError(`CSV parsing error: ${results.errors[0].message}`);
+              setError(`CSV parsing error: ${results.errors[0]?.message || 'Unknown parsing error'}`);
               setIsImporting(false);
               return;
             }
@@ -113,8 +113,8 @@ export default function CSVImport({ onImport }: CSVImportProps) {
                 let symbol = instrumentValue.includes('NIFTY') ? 'NIFTY' : 
                              instrumentValue.includes('SENSEX') ? 'SENSEX' : 'NIFTY';
                 let strikePrice = 0; // Default to 0, will be updated if we can extract it
-                let optionType = null;
-                let expiryDate = null;
+                let optionType: 'CALL' | 'PUT' | null = null;
+                let expiryDate: string | null = null;
                 
                 if (instrumentParts && instrumentParts.length >= 5) {
                   symbol = instrumentParts[1]; // NIFTY or SENSEX
@@ -547,8 +547,8 @@ export default function CSVImport({ onImport }: CSVImportProps) {
       // In broker format:
       // BUY = LONG (entry)
       // SELL = SHORT (exit)
-      const longTrades = instrumentTrades.filter(t => t.type === 'LONG');
-      const shortTrades = instrumentTrades.filter(t => t.type === 'SHORT');
+      const longTrades = instrumentTrades?.filter(t => t.type === 'LONG') || [];
+      const shortTrades = instrumentTrades?.filter(t => t.type === 'SHORT') || [];
       
       // Group trades by "trade sequence" - a sequence starts with LONGs and ends with a SHORT
       // We'll identify trade sequences by looking at the timing
@@ -576,7 +576,7 @@ export default function CSVImport({ onImport }: CSVImportProps) {
       };
       
       // Sort all trades by date
-      const allTradesSorted = [...instrumentTrades].sort((a, b) => {
+      const allTradesSorted = [...(instrumentTrades || [])].sort((a, b) => {
         const dateA = new Date(a.entryDate);
         const dateB = new Date(b.entryDate);
         return dateA.getTime() - dateB.getTime();
@@ -654,24 +654,26 @@ export default function CSVImport({ onImport }: CSVImportProps) {
           // Create a consolidated trade for this sequence
           const firstLong = sequence.longs[0];
           
-          const consolidatedTrade: TradeFormData = {
-            symbol: firstLong.symbol,
-            type: 'LONG', // Always show as LONG for consolidated view
-            instrumentType: firstLong.instrumentType,
-            entryPrice: sequence.avgEntryPrice,
-            exitPrice: sequence.exitPrice,
-            quantity: sequence.totalQty,
-            strikePrice: firstLong.strikePrice,
-            expiryDate: safeToISOString(firstLong.expiryDate),
-            optionType: firstLong.optionType,
-            entryDate: sequence.entryDate,
-            exitDate: sequence.exitDate,
-            profitLoss: sequence.profitLoss,
-            notes: `Consolidated trade (${sequence.longs.length} entries)`,
-            sector: firstLong.sector,
-          };
-          
-          processedTrades.push(consolidatedTrade);
+          if (firstLong) {
+            const consolidatedTrade: TradeFormData = {
+              symbol: firstLong.symbol,
+              type: 'LONG', // Always show as LONG for consolidated view
+              instrumentType: firstLong.instrumentType,
+              entryPrice: sequence.avgEntryPrice,
+              exitPrice: sequence.exitPrice,
+              quantity: sequence.totalQty,
+              strikePrice: firstLong.strikePrice,
+              expiryDate: safeToISOString(firstLong.expiryDate),
+              optionType: firstLong.optionType,
+              entryDate: sequence.entryDate,
+              exitDate: sequence.exitDate,
+              profitLoss: sequence.profitLoss,
+              notes: `Consolidated trade (${sequence.longs.length} entries)`,
+              sector: firstLong.sector,
+            };
+            
+            processedTrades.push(consolidatedTrade);
+          }
         }
       }
     }

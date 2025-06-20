@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 import ChartRegistry from "./components/ChartRegistry";
+import MobileMenuToggle from "./components/MobileMenuToggle";
+import PerformanceMonitor from "./components/PerformanceMonitor";
 
 export const metadata: Metadata = {
   title: "Trading Journal",
@@ -80,28 +82,11 @@ export default function RootLayout({
           {children}
         </main>
 
-        {/* Mobile Menu Toggle Script */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            document.addEventListener('DOMContentLoaded', function() {
-              const mobileMenuButton = document.querySelector('.mobile-menu-button');
-              const mobileMenu = document.querySelector('.mobile-menu');
-              
-              if (mobileMenuButton && mobileMenu) {
-                mobileMenuButton.addEventListener('click', function() {
-                  mobileMenu.classList.toggle('hidden');
-                });
-                
-                // Close menu when clicking outside
-                document.addEventListener('click', function(event) {
-                  if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
-                    mobileMenu.classList.add('hidden');
-                  }
-                });
-              }
-            });
-          `
-        }} />
+        {/* Mobile Menu Toggle Component */}
+        <MobileMenuToggle />
+        
+        {/* Performance Monitoring (Production Only) */}
+        <PerformanceMonitor />
       </body>
     </html>
   );

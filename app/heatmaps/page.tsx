@@ -41,7 +41,8 @@ export default function HeatmapsPage() {
       try {
         const response = await fetch('/api/trades');
         if (!response.ok) throw new Error('Failed to fetch trades');
-        const data = await response.json();
+        const result = await response.json();
+        const data = result.data || [];
         setTrades(data);
       } catch (error) {
         console.error('Error fetching trades:', error);

@@ -139,7 +139,8 @@ export default function CalendarPage() {
           throw new Error('Failed to fetch trades');
         }
         
-        const data = await response.json();
+        const result = await response.json();
+        const data = result.data || [];
         setAllTrades(data);
         
         const monthStart = new Date(year, month, 1);

@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import DOMPurify from 'dompurify';
 import { createTrade, updateTrade, TradeFormData } from '../actions/trade';
 import {
   InstrumentType,
   TradeType,
-  OptionType,
   LOT_SIZES,
   TIME_FRAMES,
   MARKET_CONDITIONS,
@@ -47,15 +45,9 @@ const tradeSchema = z.object({
   setupImageUrl: z.string().optional(),
 });
 
-// Helper function to convert lots to quantity based on symbol
-const convertLotsToQuantity = (lots: number, symbol: string): number => {
-  const lotSize = LOT_SIZES[symbol] || LOT_SIZES.DEFAULT;
-  return lots * lotSize;
-};
-
 // Helper function to calculate lot size for a symbol
 const getLotSize = (symbol: string): number => {
-  return LOT_SIZES[symbol] || LOT_SIZES.DEFAULT;
+  return LOT_SIZES[symbol] ?? LOT_SIZES.DEFAULT;
 };
 
 interface TradeFormProps {
@@ -66,7 +58,6 @@ interface TradeFormProps {
 
 export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFormProps) {
   const [selectedInstrumentType, setSelectedInstrumentType] = useState<string>(initialData?.instrumentType || 'STOCK');
-  const [inputAsLots, setInputAsLots] = useState<boolean>(false);
 
   const {
     register,
@@ -145,8 +136,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
       const isLotBased = (symbol === 'NIFTY' || symbol === 'SENSEX') && 
                           trade.quantity && (trade.quantity % lotSize === 0);
       
-      // Set the inputAsLots state based on the trade
-      setInputAsLots(Boolean(isLotBased));
+      // Note: Trade uses lot-based quantity calculation
       
       // Format dates properly for the datetime-local inputs
       const formatDateForInput = (dateValue: string | null | undefined) => {

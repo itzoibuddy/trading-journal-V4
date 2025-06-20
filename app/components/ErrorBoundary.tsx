@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -24,18 +24,44 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log the error to an error reporting service
-    console.error('Error boundary caught error:', error);
-    console.error('Component stack:', errorInfo.componentStack);
-    
-    // Send to logging service if available
-    if (typeof window !== 'undefined') {
-      // Log to browser console in detail
-      console.group('Detailed Error Information');
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+    // Only log detailed errors in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Error boundary caught error:', error);
       console.error('Component stack:', errorInfo.componentStack);
-      console.groupEnd();
+      
+      if (typeof window !== 'undefined') {
+        console.group('Detailed Error Information');
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Component stack:', errorInfo.componentStack);
+        console.groupEnd();
+      }
+    }
+    
+    // In production, send to error tracking service
+    if (process.env.NODE_ENV === 'production' && typeof window !== 'undefined') {
+      // Send minimal error info to external service
+      try {
+        // Example: Send to error tracking service like Sentry
+        // Sentry.captureException(error, { extra: errorInfo });
+        
+        // Or send to your own logging endpoint
+        fetch('/api/error-tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+          }),
+        }).catch(() => {
+          // Silently fail if error tracking fails
+        });
+      } catch {
+        // Silently fail if error tracking fails
+      }
     }
   }
 

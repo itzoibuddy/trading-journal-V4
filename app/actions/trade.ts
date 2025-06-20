@@ -157,8 +157,6 @@ export async function updateTrade(id: number, data: TradeFormData) {
 }
 
 export async function deleteTrade(id: number) {
-  console.log(`deleteTrade: Attempting to delete trade with ID: ${id}`);
-  
   try {
     // First check if the trade exists
     const existingTrade = await prisma.trade.findUnique({
@@ -166,27 +164,26 @@ export async function deleteTrade(id: number) {
     });
     
     if (!existingTrade) {
-      console.log(`deleteTrade: Trade with ID ${id} not found in database`);
       throw new Error(`Trade with ID ${id} not found`);
     }
-    
-    console.log(`deleteTrade: Found trade ${existingTrade.symbol} with ID ${id}, proceeding with deletion`);
     
     await prisma.trade.delete({
       where: { id },
     });
     
-    console.log(`deleteTrade: Successfully deleted trade with ID: ${id}`);
-    
+    // Revalidate relevant paths
     revalidatePath('/trades');
     revalidatePath('/calendar');
     revalidatePath('/analytics');
     revalidatePath('/heatmaps');
     revalidatePath('/');
     
-    console.log(`deleteTrade: Revalidated paths after deletion`);
+    return { success: true, message: 'Trade deleted successfully' };
   } catch (error) {
-    console.error(`deleteTrade: Error deleting trade with ID ${id}:`, error);
+    // Only log in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.error(`Error deleting trade with ID ${id}:`, error);
+    }
     throw error;
   }
 } 

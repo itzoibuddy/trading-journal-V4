@@ -21,7 +21,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
 
   // Generate page numbers to display
   const getPageNumbers = () => {
-    const pageNumbers = [];
+    const pageNumbers: (number | string)[] = [];
     
     // Always show first page
     pageNumbers.push(1);

@@ -53,10 +53,11 @@ export default function HomePage() {
       try {
         const response = await fetch('/api/trades');
         if (response.ok) {
-          const data = await response.json();
-          setTrades(data);
-          if (data.length > 0) {
-            generateEquityCurve(data);
+          const result = await response.json();
+          const tradesData = result.data || [];
+          setTrades(tradesData);
+          if (tradesData.length > 0) {
+            generateEquityCurve(tradesData);
           }
         }
       } catch (error) {

@@ -4,11 +4,11 @@ import { PrismaClient } from '@prisma/client';
 // exhausting your database connection limit.
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-// Configure Prisma client with connection retry logic
+// Configure Prisma client with production optimizations
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ['error', 'warn'],
-    errorFormat: 'pretty',
+    log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
+    errorFormat: process.env.NODE_ENV === 'production' ? 'minimal' : 'pretty',
   }).$extends({
     query: {
       async $allOperations({ operation, model, args, query }) {
@@ -16,13 +16,25 @@ const prismaClientSingleton = () => {
         try {
           return await query(args);
         } catch (error: any) {
-          console.error(`Database error in ${model}.${operation}:`, error.message);
-          throw error;
+          // Only log errors, not warnings in production
+          if (process.env.NODE_ENV !== 'production') {
+            console.error(`Database error in ${model}.${operation}:`, error.message);
+          }
+          
+          // Re-throw the error for proper error handling
+          throw new Error(`Database operation failed: ${model}.${operation}`);
         } finally {
           const end = performance.now();
           const time = end - start;
-          if (time > 100) {
+          
+          // Only warn about slow queries in development
+          if (process.env.NODE_ENV !== 'production' && time > 100) {
             console.warn(`Slow query detected: ${model}.${operation} took ${time.toFixed(2)}ms`);
+          }
+          
+          // Log critical slow queries in production (>1000ms)
+          if (process.env.NODE_ENV === 'production' && time > 1000) {
+            console.error(`Critical slow query: ${model}.${operation} took ${time.toFixed(2)}ms`);
           }
         }
       },
@@ -32,4 +44,17 @@ const prismaClientSingleton = () => {
 
 export const prisma = globalForPrisma.prisma || prismaClientSingleton();
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma; 
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+// Graceful shutdown handling
+if (typeof window === 'undefined') {
+  process.on('SIGINT', async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+  
+  process.on('SIGTERM', async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+} 
