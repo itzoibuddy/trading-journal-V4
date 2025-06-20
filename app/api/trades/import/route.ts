@@ -5,7 +5,6 @@ import { prisma } from '../../../lib/db';
 import { rateLimit, corsHeaders } from '../../../lib/middleware';
 import { handleApiError, ValidationError } from '../../../lib/errors';
 import Papa from 'papaparse';
-import DOMPurify from 'dompurify';
 import { z } from 'zod';
 
 const rateLimiter = rateLimit(10, 60000); // 10 imports per minute
@@ -102,12 +101,56 @@ export async function POST(request: NextRequest) {
       try {
         const row = rows[i];
         
-        // Sanitize string inputs
+        // Sanitize string inputs (server-safe sanitization)
+        const sanitizeString = (str: string) => {
+          if (!str) return '';
+          // Remove HTML tags and dangerous characters
+          return str.replace(/<[^>]*>/g, '').replace(/[<>'"&]/g, '').trim();
+        };
+
         const sanitizedRow = {
           ...row,
-          symbol: DOMPurify.sanitize(row.symbol || '').toUpperCase(),
-          notes: row.notes ? DOMPurify.sanitize(row.notes) : undefined,
-          sector: row.sector ? DOMPurify.sanitize(row.sector) : undefined,
+          symbol: sanitizeString(row.symbol || '').toUpperCase(),
+          notes: row.notes ? sanitizeString(row.notes) : undefined,
+          sector: row.sector ? sanitizeString(row.sector) : undefined,
+        };
+
+        // Helper function to parse various date formats
+        const parseDate = (dateStr: string | undefined | null): string | null => {
+          if (!dateStr) return null;
+          
+          // Try to parse the date
+          const date = new Date(dateStr);
+          
+          // Check if date is valid
+          if (isNaN(date.getTime())) {
+            // Try common date formats
+            const formats = [
+              /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // MM/DD/YYYY or M/D/YYYY
+              /(\d{4})-(\d{1,2})-(\d{1,2})/, // YYYY-MM-DD
+              /(\d{1,2})-(\d{1,2})-(\d{4})/, // DD-MM-YYYY
+            ];
+            
+            for (const format of formats) {
+              const match = dateStr.match(format);
+              if (match) {
+                let parsedDate: Date;
+                if (format === formats[0]) { // MM/DD/YYYY
+                  parsedDate = new Date(`${match[3]}-${match[1].padStart(2, '0')}-${match[2].padStart(2, '0')}`);
+                } else if (format === formats[1]) { // YYYY-MM-DD
+                  parsedDate = new Date(`${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`);
+                } else { // DD-MM-YYYY
+                  parsedDate = new Date(`${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`);
+                }
+                if (!isNaN(parsedDate.getTime())) {
+                  return parsedDate.toISOString();
+                }
+              }
+            }
+            throw new Error('Invalid date format');
+          }
+          
+          return date.toISOString();
         };
 
         // Convert and validate data types
@@ -119,8 +162,8 @@ export async function POST(request: NextRequest) {
           exitPrice: sanitizedRow.exitprice || sanitizedRow.exitPrice ? parseFloat(sanitizedRow.exitprice || sanitizedRow.exitPrice) : null,
           quantity: parseFloat(sanitizedRow.quantity || '0'),
           strikePrice: sanitizedRow.strikeprice || sanitizedRow.strikePrice ? parseFloat(sanitizedRow.strikeprice || sanitizedRow.strikePrice) : null,
-          entryDate: new Date(sanitizedRow.entrydate || sanitizedRow.entryDate).toISOString(),
-          exitDate: sanitizedRow.exitdate || sanitizedRow.exitDate ? new Date(sanitizedRow.exitdate || sanitizedRow.exitDate).toISOString() : null,
+          entryDate: parseDate(sanitizedRow.entrydate || sanitizedRow.entryDate) || '',
+          exitDate: parseDate(sanitizedRow.exitdate || sanitizedRow.exitDate),
           profitLoss: sanitizedRow.profitloss || sanitizedRow.profitLoss ? parseFloat(sanitizedRow.profitloss || sanitizedRow.profitLoss) : null,
           notes: sanitizedRow.notes || '',
           sector: sanitizedRow.sector || '',

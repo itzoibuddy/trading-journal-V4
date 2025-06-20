@@ -8,7 +8,6 @@ import { Trade } from '../types/Trade';
 import TradeForm from '../components/TradeForm';
 import TradeTable from '../components/TradeTable';
 import CSVImport from '../components/CSVImport';
-import CSVImportServer from '../components/CSVImportServer';
 import TradeSummary from '../components/TradeSummary';
 
 // Helper function to safely convert to ISO string
@@ -377,25 +376,7 @@ export default function TradesPage() {
           </div>
         </div>
 
-        {/* Server-Side CSV Import Section */}
-        <div className="mb-8">
-          <CSVImportServer onImportComplete={async () => {
-            // Reload trades after server-side import
-            try {
-              const updatedTrades = await getTrades();
-              setTrades(updatedTrades.map(trade => convertDatesToISOString({
-                ...trade,
-                type: trade.type as 'LONG' | 'SHORT',
-                instrumentType: trade.instrumentType as 'STOCK' | 'FUTURES' | 'OPTIONS'
-              })));
-              setImportMessage('✅ Server-side import completed successfully!');
-              setTimeout(() => setImportMessage(null), 4000);
-            } catch (err) {
-              setError('Failed to reload trades after import');
-              console.error(err);
-            }
-          }} />
-        </div>
+
 
         {/* Alert Messages */}
         {importMessage && (

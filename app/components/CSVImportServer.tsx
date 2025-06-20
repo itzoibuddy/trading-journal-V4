@@ -89,8 +89,8 @@ export default function CSVImportServer({ onImportComplete }: CSVImportServerPro
         entryPrice: '2850.50',
         exitPrice: '2950.75',
         quantity: '10',
-        entryDate: '2025-06-01T10:00:00',
-        exitDate: '2025-06-01T14:30:00',
+        entryDate: '06/01/2025',
+        exitDate: '06/01/2025',
         profitLoss: '1002.50',
         notes: 'Earnings momentum trade',
         sector: 'Energy'
@@ -103,8 +103,8 @@ export default function CSVImportServer({ onImportComplete }: CSVImportServerPro
         exitPrice: '30.50',
         quantity: '75',
         strikePrice: '24900',
-        entryDate: '2025-06-02T09:30:00',
-        exitDate: '2025-06-02T15:45:00',
+        entryDate: '06/02/2025',
+        exitDate: '06/02/2025',
         profitLoss: '1106.25',
         notes: 'Put option trade',
         sector: 'Index'
@@ -128,7 +128,7 @@ export default function CSVImportServer({ onImportComplete }: CSVImportServerPro
   return (
     <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
       <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
-        📁 Server-Side CSV Import
+        📁 CSV Import
       </h3>
 
       <div className="space-y-4">
@@ -137,6 +137,9 @@ export default function CSVImportServer({ onImportComplete }: CSVImportServerPro
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Upload CSV File (Max 50MB, 10,000 rows)
           </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Supported date formats: MM/DD/YYYY, YYYY-MM-DD, DD-MM-YYYY
+          </p>
           <input
             type="file"
             accept=".csv"
@@ -231,9 +234,9 @@ export default function CSVImportServer({ onImportComplete }: CSVImportServerPro
 
         {/* Feature Highlights */}
         <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
-          <h4 className="font-semibold text-indigo-900 mb-2">🚀 Server-Side Features:</h4>
+          <h4 className="font-semibold text-indigo-900 mb-2">🚀 Enterprise Features:</h4>
           <ul className="text-sm text-indigo-700 space-y-1">
-            <li>• ✅ <strong>No Memory Limits:</strong> Handles large files efficiently</li>
+            <li>• ✅ <strong>Large Files:</strong> Up to 50MB and 10,000 rows</li>
             <li>• ✅ <strong>Batch Processing:</strong> Processes 100 records at a time</li>
             <li>• ✅ <strong>Server Validation:</strong> Validates every row before import</li>
             <li>• ✅ <strong>Error Recovery:</strong> Continues processing even if some rows fail</li>
