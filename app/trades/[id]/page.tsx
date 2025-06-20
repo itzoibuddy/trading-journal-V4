@@ -64,8 +64,30 @@ export default function TradeDetailsPage() {
     const exit = typeof exitDate === 'string' ? new Date(exitDate) : exitDate;
     
     const diffTime = Math.abs(exit.getTime() - entry.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    // Calculate different time units
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Handle intraday trades (less than 24 hours)
+    if (diffDays === 0) {
+      if (diffHours === 0) {
+        if (diffMinutes === 0) return 'Less than 1 minute';
+        if (diffMinutes === 1) return '1 minute';
+        return `${diffMinutes} minutes`;
+      }
+      if (diffHours === 1) {
+        const remainingMinutes = diffMinutes % 60;
+        if (remainingMinutes === 0) return '1 hour';
+        return `1 hour ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+      }
+      const remainingMinutes = diffMinutes % 60;
+      if (remainingMinutes === 0) return `${diffHours} hours`;
+      return `${diffHours} hours ${remainingMinutes} min${remainingMinutes !== 1 ? 's' : ''}`;
+    }
+    
+    // Handle multi-day trades
     if (diffDays === 1) return '1 day';
     if (diffDays < 7) return `${diffDays} days`;
     if (diffDays < 30) {
