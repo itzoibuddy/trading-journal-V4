@@ -1,7 +1,29 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { compare } from 'bcryptjs';
-import { prisma } from './db';
+
+// Extend NextAuth types
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string;
+    };
+  }
+  
+  interface User {
+    id: string;
+    email: string;
+    name?: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    userId: string;
+    email: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -43,9 +65,12 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.userId as string;
-        session.user.email = token.email as string;
+      if (token) {
+        session.user = {
+          id: token.userId,
+          email: token.email,
+          name: session.user?.name,
+        };
       }
       return session;
     },
