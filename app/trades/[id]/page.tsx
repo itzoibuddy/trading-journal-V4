@@ -46,8 +46,10 @@ export default function TradeDetailsPage() {
     return value.toFixed(2);
   };
 
-  const formatDate = (dateString: string | Date) => {
+  const formatDate = (dateString: string | Date | null | undefined) => {
+    if (!dateString) return 'No date';
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'long',
@@ -57,11 +59,14 @@ export default function TradeDetailsPage() {
     });
   };
 
-  const calculateTradeDuration = (entryDate: string | Date, exitDate: string | Date | null | undefined) => {
+  const calculateTradeDuration = (entryDate: string | Date | null | undefined, exitDate: string | Date | null | undefined) => {
+    if (!entryDate) return 'No entry date';
     if (!exitDate) return 'Position still open';
     
     const entry = typeof entryDate === 'string' ? new Date(entryDate) : entryDate;
     const exit = typeof exitDate === 'string' ? new Date(exitDate) : exitDate;
+    
+    if (isNaN(entry.getTime()) || isNaN(exit.getTime())) return 'Invalid dates';
     
     const diffTime = Math.abs(exit.getTime() - entry.getTime());
     
