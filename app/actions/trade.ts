@@ -3,6 +3,7 @@
 import { prisma } from '../lib/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { getServerSession } from 'next-auth';
 
 const tradeSchema = z.object({
   symbol: z.string().min(1, 'Symbol is required'),
@@ -39,12 +40,41 @@ const tradeSchema = z.object({
 export type TradeFormData = z.infer<typeof tradeSchema>;
 
 export async function getTrades() {
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    return [];
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email }
+  });
+
+  if (!user) {
+    return [];
+  }
+
   return prisma.trade.findMany({
+    where: { userId: user.id },
     orderBy: { entryDate: 'desc' },
   });
 }
 
 export async function getTradesByDate(date: Date) {
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    return [];
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email }
+  });
+
+  if (!user) {
+    return [];
+  }
+
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
   
@@ -53,6 +83,7 @@ export async function getTradesByDate(date: Date) {
   
   return prisma.trade.findMany({
     where: {
+      userId: user.id,
       entryDate: {
         gte: startOfDay,
         lte: endOfDay,
@@ -68,10 +99,26 @@ const formatDecimal = (value: number | null | undefined): number | null => {
 };
 
 export async function createTrade(data: TradeFormData) {
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    throw new Error('Unauthorized');
+  }
+
+  // Get the user from the database
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
   const validatedData = tradeSchema.parse(data);
   
   const trade = await prisma.trade.create({
     data: {
+      userId: user.id,
       symbol: validatedData.symbol,
       type: validatedData.type,
       instrumentType: validatedData.instrumentType,
@@ -112,6 +159,29 @@ export async function createTrade(data: TradeFormData) {
 }
 
 export async function updateTrade(id: number, data: TradeFormData) {
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    throw new Error('Unauthorized');
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Check if the trade belongs to the user
+  const existingTrade = await prisma.trade.findFirst({
+    where: { id, userId: user.id }
+  });
+
+  if (!existingTrade) {
+    throw new Error('Trade not found or unauthorized');
+  }
+
   const validatedData = tradeSchema.parse(data);
   
   const trade = await prisma.trade.update({
@@ -158,13 +228,27 @@ export async function updateTrade(id: number, data: TradeFormData) {
 
 export async function deleteTrade(id: number) {
   try {
-    // First check if the trade exists
-    const existingTrade = await prisma.trade.findUnique({
-      where: { id }
+    const session = await getServerSession();
+    
+    if (!session?.user?.email) {
+      throw new Error('Unauthorized');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // First check if the trade exists and belongs to the user
+    const existingTrade = await prisma.trade.findFirst({
+      where: { id, userId: user.id }
     });
     
     if (!existingTrade) {
-      throw new Error(`Trade with ID ${id} not found`);
+      throw new Error(`Trade with ID ${id} not found or unauthorized`);
     }
     
     await prisma.trade.delete({
