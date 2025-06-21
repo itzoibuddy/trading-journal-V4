@@ -4,6 +4,9 @@ import { authOptions } from '../../../../auth/[...nextauth]/route'
 import { prisma } from '../../../../../lib/db'
 import { z } from 'zod'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 const updateStatusSchema = z.object({
   status: z.enum(['ACTIVE', 'SUSPENDED'])
 })
