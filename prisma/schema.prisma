@@ -5,15 +5,51 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Use PostgreSQL for production
+// Use SQLite for local development, PostgreSQL for production
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // For local development with SQLite, comment out the above and uncomment below:
-  // provider = "sqlite"
-  // url      = "file:./dev.db"
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
+// User model with subscription readiness
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  image         String?
+  password      String?  // For credentials login
+  emailVerified DateTime?
+  role          String   @default("TRADER") // TRADER, ADMIN, SUPER_ADMIN
+  status        String   @default("ACTIVE") // ACTIVE, SUSPENDED, DELETED
+  
+  // Profile fields
+  bio           String?
+  timezone      String?   @default("UTC")
+  defaultRiskRatio Float? @default(2.0)
+  tradingExperience String? // "BEGINNER", "INTERMEDIATE", "ADVANCED"
+  
+  // Subscription fields (for future)
+  subscriptionStatus String @default("FREE") // FREE, ACTIVE, PAST_DUE, CANCELED, EXPIRED
+  subscriptionPlan   String?            @default("free")
+  subscriptionEnd    DateTime?
+  tradeLimit         Int?               @default(50) // Free tier limit
+  
+  // Relations
+  trades        Trade[]
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Tracking
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLoginAt   DateTime?
+  
+  @@map("users")
+}
+
+// Using String instead of enums for SQLite compatibility
+
+// Enhanced Trade model
 model Trade {
   id              Int      @id @default(autoincrement())
   symbol          String
@@ -50,10 +86,20 @@ model Trade {
   timeFrame       String?  // Time frame used for analysis (e.g., "5m", "1h", "Daily")
   marketCondition String?  // Overall market condition (e.g., "Bullish", "Bearish", "Sideways")
   
+  // User relation
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Demo/Real trade flag
+  isDemo        Boolean  @default(false)
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // Indexes for better query performance
+  // Enhanced indexes for better query performance
+  @@index([userId])
+  @@index([userId, entryDate])
+  @@index([userId, isDemo])
   @@index([symbol, entryDate])
   @@index([entryDate])
   @@index([exitDate])
@@ -61,4 +107,62 @@ model Trade {
   @@index([type])
   @@index([profitLoss])
   @@index([createdAt])
+}
+
+// NextAuth required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// Audit log for admin oversight
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  // Null if system action
+  action    String   // "CREATE_TRADE", "DELETE_USER", etc.
+  resource  String   // "Trade", "User", etc.
+  resourceId String? // ID of affected resource
+  metadata  String?  // Additional context (JSON string)
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 } 

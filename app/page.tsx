@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -32,6 +35,7 @@ const POSITIVE_BG_COLOR = 'rgba(22, 163, 74, 0.1)';
 const NEGATIVE_BG_COLOR = 'rgba(220, 38, 38, 0.1)';
 
 export default function HomePage() {
+  const { data: session, status } = useSession();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [equityCurveData, setEquityCurveData] = useState<ChartData<'line'>>({
@@ -49,6 +53,24 @@ export default function HomePage() {
   });
 
   useEffect(() => {
+    // Add a timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      if (status === 'loading') {
+        console.log('Session loading timeout - assuming unauthenticated');
+        setLoading(false);
+      }
+    }, 5000); // 5 second timeout
+
+    if (status === 'loading') return; // Still loading
+    
+    clearTimeout(loadingTimeout);
+    
+    if (status === 'unauthenticated') {
+      // Don't redirect, just show the sign-in state
+      setLoading(false);
+      return;
+    }
+
     const fetchTrades = async () => {
       try {
         const response = await fetch('/api/trades');
@@ -67,8 +89,12 @@ export default function HomePage() {
       }
     };
 
-    fetchTrades();
-  }, []);
+    if (status === 'authenticated') {
+      fetchTrades();
+    }
+
+    return () => clearTimeout(loadingTimeout);
+  }, [status]);
 
   const generateEquityCurve = (tradesData: Trade[]) => {
     // Sort trades by entry date
@@ -114,7 +140,7 @@ export default function HomePage() {
     });
   };
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
@@ -122,6 +148,103 @@ export default function HomePage() {
             <div className="w-8 h-8 bg-white rounded-full"></div>
           </div>
           <p className="text-gray-600 font-medium">Loading your trading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto px-6 py-16">
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6">
+              📊 Trading Journal
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Professional trading analytics platform to track, analyze, and optimize your trading performance
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/signin"
+                className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-2xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
+              >
+                Sign In to Continue
+              </Link>
+              <Link
+                href="/signup"
+                className="px-8 py-4 bg-white/80 backdrop-blur-sm text-gray-700 font-semibold rounded-2xl border border-white/50 hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
+
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {[
+              {
+                icon: "📈",
+                title: "Performance Analytics",
+                description: "Track your P&L, win rate, and risk metrics with advanced analytics"
+              },
+              {
+                icon: "📊",
+                title: "Trade Management",
+                description: "Log and manage all your trades with detailed entry and exit data"
+              },
+              {
+                icon: "🗓️",
+                title: "Calendar View",
+                description: "Visualize your trading activity and performance over time"
+              },
+              {
+                icon: "🔥",
+                title: "Heatmaps",
+                description: "Identify your best and worst performing days and patterns"
+              },
+              {
+                icon: "⚖️",
+                title: "Risk Management",
+                description: "Monitor and control your risk exposure with advanced tools"
+              },
+              {
+                icon: "📋",
+                title: "Trading Plan",
+                description: "Create and follow structured trading plans and strategies"
+              }
+            ].map((feature, index) => (
+              <div
+                key={feature.title}
+                className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Section */}
+          <div className="text-center bg-gradient-to-r from-indigo-50 to-blue-50 rounded-3xl p-12 border border-white/50">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Ready to Optimize Your Trading?
+            </h2>
+            <p className="text-lg text-gray-600 mb-8 max-w-xl mx-auto">
+              Join thousands of traders who use our platform to analyze and improve their trading performance
+            </p>
+            <Link
+              href="/signup"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-2xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
+            >
+              Get Started Free
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </Link>
+          </div>
         </div>
       </div>
     );
