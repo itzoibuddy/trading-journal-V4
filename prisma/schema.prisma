@@ -7,8 +7,8 @@ generator client {
 
 // Use SQLite for local development, PostgreSQL for production
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // User model with subscription readiness
