@@ -4,6 +4,7 @@ import { prisma } from '../lib/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '../api/auth/[...nextauth]/route';
 
 const tradeSchema = z.object({
   symbol: z.string().min(1, 'Symbol is required'),
@@ -40,7 +41,7 @@ const tradeSchema = z.object({
 export type TradeFormData = z.infer<typeof tradeSchema>;
 
 export async function getTrades() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     return [];
@@ -61,7 +62,7 @@ export async function getTrades() {
 }
 
 export async function getTradesByDate(date: Date) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     return [];
@@ -99,7 +100,7 @@ const formatDecimal = (value: number | null | undefined): number | null => {
 };
 
 export async function createTrade(data: TradeFormData) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     throw new Error('Unauthorized');
@@ -159,7 +160,7 @@ export async function createTrade(data: TradeFormData) {
 }
 
 export async function updateTrade(id: number, data: TradeFormData) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
     throw new Error('Unauthorized');
@@ -228,7 +229,7 @@ export async function updateTrade(id: number, data: TradeFormData) {
 
 export async function deleteTrade(id: number) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
       throw new Error('Unauthorized');

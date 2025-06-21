@@ -1,17 +1,21 @@
+/// <reference path="../../../types/next-auth.d.ts" />
 import NextAuth from 'next-auth'
+import type { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from '../../../lib/db'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import type { Session } from 'next-auth'
+import type { JWT } from 'next-auth/jwt'
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 })
 
-const handler = NextAuth({
+const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -74,7 +78,7 @@ const handler = NextAuth({
     maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger, session }): Promise<JWT> {
       if (user) {
         token.role = (user as any).role
         token.id = user.id
@@ -88,10 +92,10 @@ const handler = NextAuth({
 
       return token
     },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
+    async session({ session, token }): Promise<Session> {
+      if (token && session.user) {
+        (session.user as any).id = token.id as string;
+        (session.user as any).role = token.role as string;
       }
       return session
     },
@@ -158,7 +162,9 @@ const handler = NextAuth({
       }
     }
   }
-})
+}
+
+const handler = NextAuth(authOptions)
 
 async function createDemoTrades(userId: string) {
   const demoTrades = [
@@ -224,4 +230,4 @@ async function createDemoTrades(userId: string) {
   })
 }
 
-export { handler as GET, handler as POST } 
+export { handler as GET, handler as POST, authOptions } 
