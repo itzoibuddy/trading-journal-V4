@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]/route';
 import { prisma } from '../../lib/db';
 import { rateLimit, corsHeaders } from '../../lib/middleware';
 
@@ -22,6 +24,28 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get the current user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const start = searchParams.get('start');
     const end = searchParams.get('end');
@@ -44,8 +68,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build where clause
-    const where: any = {};
+    // Build where clause - CRITICAL: Filter by userId to ensure data isolation
+    const where: any = {
+      userId: user.id // Only show trades belonging to the authenticated user
+    };
+    
     if (start && end) {
       where.entryDate = {
         gte: new Date(start),
@@ -53,10 +80,10 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Get total count for pagination
+    // Get total count for pagination (filtered by user)
     const totalCount = await prisma.trade.count({ where });
     
-    // Get paginated trades
+    // Get paginated trades (filtered by user)
     const trades = await prisma.trade.findMany({
       where,
       orderBy: {
