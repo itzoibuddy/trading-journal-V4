@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 import { prisma } from '../../../lib/db'
+import { z } from 'zod'
 
 // Mock settings storage (in production, you'd store this in database)
 const defaultSettings = {
@@ -13,6 +14,17 @@ const defaultSettings = {
   backupEnabled: true,
   emailNotifications: false
 }
+
+// Zod schema to strictly validate incoming settings updates
+const settingsSchema = z.object({
+  maintenanceMode: z.boolean().optional(),
+  registrationEnabled: z.boolean().optional(),
+  maxTradesPerUser: z.number().int().positive().optional(),
+  maxUsersAllowed: z.number().int().positive().optional(),
+  systemMessage: z.string().optional(),
+  backupEnabled: z.boolean().optional(),
+  emailNotifications: z.boolean().optional(),
+}).strict()
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,7 +69,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const settings = await request.json()
+    // Validate request body against schema – reject unknown or malformed fields
+    const settings = settingsSchema.parse(await request.json())
 
     // Log the settings change
     await prisma.auditLog.create({
@@ -71,11 +84,18 @@ export async function PUT(request: NextRequest) {
 
     // In a real app, you'd save to database
     // For now, just return success
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Settings updated successfully',
-      settings 
+      settings,
     })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
     console.error('Admin settings update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
