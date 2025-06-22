@@ -507,7 +507,7 @@ export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
 
   // Enhanced Lessons learned section
   if (trade.lessons || trade.lessonsLearned) {
-    const lessons = trade.lessons || trade.lessonsLearned;
+    const lessons = trade.lessons || trade.lessonsLearned || '';
     pdf.setTextColor(79, 70, 229);
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
