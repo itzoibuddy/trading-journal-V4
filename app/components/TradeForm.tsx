@@ -502,7 +502,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('timeFrame')}
                 className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
-                {TIME_FRAMES.map(tf => <option key={tf} value={tf}>{tf}</option>)}
+                {TIME_FRAMES.map(tf => <option key={tf.value} value={tf.value}>{tf.label}</option>)}
               </select>
             </div>
 
@@ -514,7 +514,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('marketCondition')}
                 className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
-                {MARKET_CONDITIONS.map(mc => <option key={mc} value={mc}>{mc}</option>)}
+                {MARKET_CONDITIONS.map(mc => <option key={mc.value} value={mc.value}>{mc.label}</option>)}
               </select>
             </div>
           </div>
