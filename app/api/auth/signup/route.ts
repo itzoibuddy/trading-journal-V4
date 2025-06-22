@@ -9,15 +9,16 @@ export const dynamic = 'force-dynamic'
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
+  mobile: z.string().regex(/^[6-9]\d{9}$/, 'Invalid mobile number. Must be a 10-digit Indian mobile number starting with 6-9'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, password } = signupSchema.parse(body)
+    const { name, email, mobile, password } = signupSchema.parse(body)
 
-    // Check if user already exists
+    // Check if user already exists with email
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
@@ -25,6 +26,18 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
+        { status: 400 }
+      )
+    }
+
+    // Check if user already exists with mobile number
+    const existingMobile = await prisma.user.findUnique({
+      where: { mobile }
+    })
+
+    if (existingMobile) {
+      return NextResponse.json(
+        { error: 'User with this mobile number already exists' },
         { status: 400 }
       )
     }
@@ -37,6 +50,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         email,
+        mobile,
         password: hashedPassword,
         role: 'TRADER',
         status: 'ACTIVE',
@@ -45,6 +59,7 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         email: true,
+        mobile: true,
         role: true,
       }
     })
@@ -59,17 +74,26 @@ export async function POST(request: NextRequest) {
         action: 'USER_CREATED',
         resource: 'User',
         resourceId: user.id,
-        metadata: JSON.stringify({ registrationMethod: 'email' })
+        metadata: JSON.stringify({ 
+          registrationMethod: 'email',
+          hasMobile: true,
+          mobileVerified: false 
+        })
       }
     })
+
+    // TODO: In future, send OTP to mobile number for verification
+    // await sendOTPVerification(mobile, 'REGISTRATION')
 
     return NextResponse.json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
+        mobile: user.mobile,
         role: user.role,
-      }
+      },
+      message: 'Account created successfully. Mobile verification will be implemented soon.'
     })
 
   } catch (error) {

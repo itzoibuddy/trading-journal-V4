@@ -19,6 +19,8 @@ model User {
   image         String?
   password      String?  // For credentials login
   emailVerified DateTime?
+  mobile        String?  @unique // Mobile number for OTP verification
+  mobileVerified DateTime? // Mobile verification timestamp
   role          String   @default("TRADER") // TRADER, ADMIN, SUPER_ADMIN
   status        String   @default("ACTIVE") // ACTIVE, SUSPENDED, DELETED
   
@@ -165,4 +167,21 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// OTP verification for mobile numbers
+model OTPVerification {
+  id        String   @id @default(cuid())
+  mobile    String   // Mobile number
+  otp       String   // OTP code
+  purpose   String   // "REGISTRATION", "LOGIN", "PASSWORD_RESET"
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0) // Number of verification attempts
+  expiresAt DateTime // OTP expiration time
+  createdAt DateTime @default(now())
+  
+  @@index([mobile])
+  @@index([mobile, purpose])
+  @@index([expiresAt])
+  @@map("otp_verifications")
 } 

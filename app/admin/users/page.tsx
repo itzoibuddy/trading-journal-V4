@@ -8,6 +8,7 @@ interface User {
   id: string
   name: string | null
   email: string
+  mobile: string | null
   role: string
   status: string
   createdAt: string
@@ -100,7 +101,8 @@ export default function UserManagement() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase())
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.mobile?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = roleFilter === 'ALL' || user.role === roleFilter
     return matchesSearch && matchesRole
   })
@@ -174,7 +176,7 @@ export default function UserManagement() {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by name, email, or mobile..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -205,6 +207,9 @@ export default function UserManagement() {
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Mobile
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -231,6 +236,24 @@ export default function UserManagement() {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{user.name || 'N/A'}</div>
                         <div className="text-sm text-gray-500">{user.email}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {user.mobile ? (
+                          <div>
+                            <div className="flex items-center">
+                              <span className="text-gray-500 mr-1">+91</span>
+                              <span>{user.mobile}</span>
+                            </div>
+                            <div className="text-xs text-blue-600 mt-1">📱 Provided</div>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="text-gray-400">Not provided</span>
+                            <div className="text-xs text-orange-600 mt-1">⚠️ Missing</div>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

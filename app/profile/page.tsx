@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
+    mobile: '',
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -32,6 +33,7 @@ export default function ProfilePage() {
       setProfileData({
         name: session.user.name || '',
         email: session.user.email || '',
+        mobile: (session.user as any)?.mobile || '',
       })
       fetchUserStats()
     }
@@ -211,6 +213,29 @@ export default function ProfilePage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">+91</span>
+                </div>
+                <input
+                  type="tel"
+                  value={profileData.mobile}
+                  disabled
+                  className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                  placeholder="Mobile number"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Mobile number cannot be changed. 
+                {profileData.mobile ? (
+                  <span className="text-green-600 ml-1">✓ Verified</span>
+                ) : (
+                  <span className="text-orange-600 ml-1">Not provided</span>
+                )}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>

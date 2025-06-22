@@ -1,42 +1,46 @@
 -- CreateTable
 CREATE TABLE "users" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
     "image" TEXT,
     "password" TEXT,
-    "emailVerified" DATETIME,
+    "emailVerified" TIMESTAMP(3),
+    "mobile" TEXT,
+    "mobileVerified" TIMESTAMP(3),
     "role" TEXT NOT NULL DEFAULT 'TRADER',
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
     "bio" TEXT,
     "timezone" TEXT DEFAULT 'UTC',
-    "defaultRiskRatio" REAL DEFAULT 2.0,
+    "defaultRiskRatio" DOUBLE PRECISION DEFAULT 2.0,
     "tradingExperience" TEXT,
     "subscriptionStatus" TEXT NOT NULL DEFAULT 'FREE',
     "subscriptionPlan" TEXT DEFAULT 'free',
-    "subscriptionEnd" DATETIME,
+    "subscriptionEnd" TIMESTAMP(3),
     "tradeLimit" INTEGER DEFAULT 50,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    "lastLoginAt" DATETIME
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "lastLoginAt" TIMESTAMP(3),
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Trade" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "symbol" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "instrumentType" TEXT NOT NULL DEFAULT 'STOCK',
-    "entryPrice" REAL NOT NULL,
-    "exitPrice" REAL,
-    "quantity" REAL NOT NULL,
-    "strikePrice" REAL,
-    "expiryDate" DATETIME,
+    "entryPrice" DOUBLE PRECISION NOT NULL,
+    "exitPrice" DOUBLE PRECISION,
+    "quantity" DOUBLE PRECISION NOT NULL,
+    "strikePrice" DOUBLE PRECISION,
+    "expiryDate" TIMESTAMP(3),
     "optionType" TEXT,
-    "premium" REAL,
-    "entryDate" DATETIME NOT NULL,
-    "exitDate" DATETIME,
-    "profitLoss" REAL,
+    "premium" DOUBLE PRECISION,
+    "entryDate" TIMESTAMP(3) NOT NULL,
+    "exitDate" TIMESTAMP(3),
+    "profitLoss" DOUBLE PRECISION,
     "notes" TEXT,
     "sector" TEXT,
     "strategy" TEXT,
@@ -50,21 +54,22 @@ CREATE TABLE "Trade" (
     "rating" INTEGER,
     "lessons" TEXT,
     "lessonsLearned" TEXT,
-    "riskRewardRatio" REAL,
-    "stopLoss" REAL,
-    "targetPrice" REAL,
+    "riskRewardRatio" DOUBLE PRECISION,
+    "stopLoss" DOUBLE PRECISION,
+    "targetPrice" DOUBLE PRECISION,
     "timeFrame" TEXT,
     "marketCondition" TEXT,
     "userId" TEXT NOT NULL,
     "isDemo" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Trade_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Trade_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "accounts" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
@@ -76,28 +81,30 @@ CREATE TABLE "accounts" (
     "scope" TEXT,
     "id_token" TEXT,
     "session_state" TEXT,
-    CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "sessions" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "sessionToken" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL,
-    CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "verificationtokens" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL
+    "expires" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "audit_logs" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "userId" TEXT,
     "action" TEXT NOT NULL,
     "resource" TEXT NOT NULL,
@@ -105,11 +112,30 @@ CREATE TABLE "audit_logs" (
     "metadata" TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "otp_verifications" (
+    "id" TEXT NOT NULL,
+    "mobile" TEXT NOT NULL,
+    "otp" TEXT NOT NULL,
+    "purpose" TEXT NOT NULL,
+    "verified" BOOLEAN NOT NULL DEFAULT false,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "otp_verifications_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_mobile_key" ON "users"("mobile");
 
 -- CreateIndex
 CREATE INDEX "Trade_userId_idx" ON "Trade"("userId");
@@ -161,3 +187,21 @@ CREATE INDEX "audit_logs_action_idx" ON "audit_logs"("action");
 
 -- CreateIndex
 CREATE INDEX "audit_logs_createdAt_idx" ON "audit_logs"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "otp_verifications_mobile_idx" ON "otp_verifications"("mobile");
+
+-- CreateIndex
+CREATE INDEX "otp_verifications_mobile_purpose_idx" ON "otp_verifications"("mobile", "purpose");
+
+-- CreateIndex
+CREATE INDEX "otp_verifications_expiresAt_idx" ON "otp_verifications"("expiresAt");
+
+-- AddForeignKey
+ALTER TABLE "Trade" ADD CONSTRAINT "Trade_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

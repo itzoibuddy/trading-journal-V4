@@ -112,10 +112,10 @@ export default function AdminDashboard() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Recent Activity</p>
+                <p className="text-sm text-gray-600">Mobile Verified</p>
                 <p className="text-2xl font-bold text-gray-900">Loading...</p>
               </div>
-              <span className="text-3xl">🔔</span>
+              <span className="text-3xl">📱</span>
             </div>
           </div>
         </div>

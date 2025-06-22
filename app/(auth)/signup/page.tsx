@@ -8,11 +8,38 @@ import Link from 'next/link'
 export default function SignUp() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [mobile, setMobile] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+
+  const formatMobileNumber = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '')
+    
+    // Limit to 10 digits
+    const limitedDigits = digits.slice(0, 10)
+    
+    // Format as XXX-XXX-XXXX
+    if (limitedDigits.length >= 6) {
+      return `${limitedDigits.slice(0, 3)}-${limitedDigits.slice(3, 6)}-${limitedDigits.slice(6)}`
+    } else if (limitedDigits.length >= 3) {
+      return `${limitedDigits.slice(0, 3)}-${limitedDigits.slice(3)}`
+    }
+    return limitedDigits
+  }
+
+  const validateMobileNumber = (mobile: string) => {
+    const digits = mobile.replace(/\D/g, '')
+    return digits.length === 10 && /^[6-9]/.test(digits) // Indian mobile number validation
+  }
+
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatMobileNumber(e.target.value)
+    setMobile(formatted)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +58,12 @@ export default function SignUp() {
       return
     }
 
+    if (!validateMobileNumber(mobile)) {
+      setError('Please enter a valid 10-digit Indian mobile number')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -40,6 +73,7 @@ export default function SignUp() {
         body: JSON.stringify({
           name,
           email,
+          mobile: mobile.replace(/\D/g, ''), // Send only digits
           password,
         }),
       })
@@ -140,6 +174,32 @@ export default function SignUp() {
             </div>
 
             <div>
+              <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">
+                Mobile Number
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 sm:text-sm">+91</span>
+                </div>
+                <input
+                  id="mobile"
+                  name="mobile"
+                  type="tel"
+                  autoComplete="tel"
+                  required
+                  value={mobile}
+                  onChange={handleMobileChange}
+                  className="appearance-none relative block w-full pl-12 pr-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="XXX-XXX-XXXX"
+                  maxLength={12} // XXX-XXX-XXXX format
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Enter your 10-digit mobile number (required for OTP verification)
+              </p>
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
@@ -199,7 +259,7 @@ export default function SignUp() {
                 type="button"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading}
-                className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -207,7 +267,7 @@ export default function SignUp() {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                Continue with Google
+                {isLoading ? 'Signing up...' : 'Sign up with Google'}
               </button>
             </div>
           </div>
