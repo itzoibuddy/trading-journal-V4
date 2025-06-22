@@ -2,15 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Trade } from '../../types/Trade';
 import TradeModal from '../../components/TradeModal';
+import { generateTradePDF } from '../../lib/pdfExport';
 
 export default function TradeDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [trade, setTrade] = useState<Trade | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   useEffect(() => {
     const fetchTrade = async () => {
@@ -174,6 +178,25 @@ export default function TradeDetailsPage() {
     setIsEditModalOpen(false);
   };
 
+  const handleExportPDF = async () => {
+    if (!trade || !session?.user) return;
+    
+    setIsExportingPDF(true);
+    try {
+      const userInfo = {
+        name: session.user.name || 'Trading User',
+        email: session.user.email || 'user@example.com'
+      };
+      
+      await generateTradePDF(trade, userInfo);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -231,6 +254,20 @@ export default function TradeDetailsPage() {
             </div>
             
             <div className="flex items-center space-x-3">
+              <button
+                onClick={handleExportPDF}
+                disabled={isExportingPDF}
+                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isExportingPDF ? (
+                  <>
+                    <div className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>📄 Export PDF</>
+                )}
+              </button>
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl"
