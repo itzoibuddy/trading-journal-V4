@@ -52,7 +52,7 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
     entryPrice: true,
     exitPrice: true,
     quantity: true,
-    strikePrice: true,
+    strikePrice: false,
     profitLoss: true,
     rating: true,
     actions: true
@@ -106,7 +106,7 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
       entryPrice: true,
       exitPrice: true,
       quantity: true,
-      strikePrice: true,
+      strikePrice: false,
       profitLoss: true,
       rating: true,
       actions: true

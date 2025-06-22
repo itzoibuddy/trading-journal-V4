@@ -479,7 +479,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
         {/* Advanced Trade Analysis */}
         <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20">
           <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-6 flex items-center">
-            📊 Trade Analysis
+            🧠 Advanced Trade Journal
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Strategy */}
@@ -490,7 +490,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 id="strategy"
                 {...register('strategy')}
                 className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
-                placeholder="e.g., Breakout, Reversal"
+                placeholder="e.g., Breakout, Mean Reversion"
               />
             </div>
 
@@ -502,10 +502,7 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('timeFrame')}
                 className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
-                <option value="">Select Time Frame</option>
-                {TIME_FRAMES.map(frame => (
-                  <option key={frame.value} value={frame.value}>{frame.label}</option>
-                ))}
+                {TIME_FRAMES.map(tf => <option key={tf} value={tf}>{tf}</option>)}
               </select>
             </div>
 
@@ -517,11 +514,23 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                 {...register('marketCondition')}
                 className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
               >
-                <option value="">Select Market Condition</option>
-                {MARKET_CONDITIONS.map(condition => (
-                  <option key={condition.value} value={condition.value}>{condition.label}</option>
-                ))}
+                {MARKET_CONDITIONS.map(mc => <option key={mc} value={mc}>{mc}</option>)}
               </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            {/* Trade Confidence */}
+            <div>
+              <label htmlFor="tradeConfidence" className="block text-sm font-semibold text-gray-700 mb-2">Trade Confidence (1-10)</label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                id="tradeConfidence"
+                {...register('tradeConfidence', { valueAsNumber: true })}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+                placeholder="1-10"
+              />
             </div>
 
             {/* Stop Loss */}
@@ -614,21 +623,6 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
               />
             </div>
 
-            {/* Pre-Trade Emotion */}
-            <div>
-              <label htmlFor="preTradeEmotion" className="block text-sm font-semibold text-gray-700 mb-2">Pre-Trade Emotion</label>
-              <select
-                id="preTradeEmotion"
-                {...register('preTradeEmotion')}
-                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
-              >
-                <option value="">Select Emotion</option>
-                {PRE_TRADE_EMOTIONS.map(emotion => (
-                  <option key={emotion.value} value={emotion.value}>{emotion.label}</option>
-                ))}
-              </select>
-            </div>
-
             {/* Post-Trade Emotion */}
             <div>
               <label htmlFor="postTradeEmotion" className="block text-sm font-semibold text-gray-700 mb-2">Post-Trade Emotion</label>
@@ -642,20 +636,6 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
                   <option key={emotion.value} value={emotion.value}>{emotion.label}</option>
                 ))}
               </select>
-            </div>
-
-            {/* Trade Confidence */}
-            <div>
-              <label htmlFor="tradeConfidence" className="block text-sm font-semibold text-gray-700 mb-2">Trade Confidence (1-10)</label>
-              <input
-                type="number"
-                min="1"
-                max="10"
-                id="tradeConfidence"
-                {...register('tradeConfidence', { valueAsNumber: true })}
-                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
-                placeholder="1-10"
-              />
             </div>
 
             {/* Trade Rating */}

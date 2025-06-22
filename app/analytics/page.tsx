@@ -7,6 +7,16 @@ import { getTrades } from '../actions/trade';
 import { Trade } from '../types/Trade';
 import ErrorBoundary from '../components/ErrorBoundary';
 
+// Helper function to format currency
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
 export default function AnalyticsPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -258,10 +268,6 @@ export default function AnalyticsPage() {
   const monthlyPerformance = calculateMonthlyPerformance();
   const sectorAnalysis = calculateSectorAnalysis();
   const riskMetrics = calculateRiskMetrics();
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
 
   const formatHour = (hour: number | null) => {
     if (hour === null) return 'N/A';
@@ -691,4 +697,48 @@ export default function AnalyticsPage() {
       </div>
     );
   }
+}
+
+function SectorAnalysis({ data }: { data: any[] }) {
+  if (!data || data.length === 0) return (
+    <div className="p-6 bg-white rounded-2xl shadow-lg border border-gray-200/80">
+      <h3 className="text-lg font-bold text-gray-800 mb-4">Sector Analysis</h3>
+      <p className="text-gray-500">No sector data available for the selected period.</p>
+    </div>
+  );
+
+  return (
+    <div className="p-6 bg-white rounded-2xl shadow-lg border border-gray-200/80">
+      <h3 className="text-lg font-bold text-gray-800 mb-4">Sector Analysis</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Sector</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Net P/L</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Trades</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Win Rate</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {data.map(item => (
+              <tr key={item.sector}>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-800">{item.sector}</td>
+                <td className={`px-4 py-2 whitespace-nowrap text-sm font-semibold ${item.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(item.profit)}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{item.trades}</td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{item.winRate.toFixed(2)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function RiskMetrics({ metrics }: { metrics: any }) {
+  if (!metrics) return null;
+  // ... existing code ...
 } 
