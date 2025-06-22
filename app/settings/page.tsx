@@ -396,6 +396,348 @@ export default function SettingsPage() {
               </div>
             )}
 
+            {/* Trading Settings */}
+            {activeTab === 'trading' && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Trading Preferences</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Default Time Frame</label>
+                    <select
+                      value={settings.trading.defaultTimeFrame}
+                      onChange={(e) => updateSetting('trading.defaultTimeFrame', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="1m">1 Minute</option>
+                      <option value="5m">5 Minutes</option>
+                      <option value="15m">15 Minutes</option>
+                      <option value="1h">1 Hour</option>
+                      <option value="4h">4 Hours</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Weekly">Weekly</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Default Instrument Type</label>
+                    <select
+                      value={settings.trading.defaultInstrument}
+                      onChange={(e) => updateSetting('trading.defaultInstrument', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="STOCK">Stocks</option>
+                      <option value="OPTIONS">Options</option>
+                      <option value="FUTURES">Futures</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Auto-calculate P&L</label>
+                        <p className="text-xs text-gray-500">Automatically calculate profit/loss when exit price is entered</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.trading.autoCalculatePL}
+                          onChange={(e) => updateSetting('trading.autoCalculatePL', e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Show Demo Trades</label>
+                        <p className="text-xs text-gray-500">Include demo trades in analytics and charts</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.trading.showDemoTrades}
+                          onChange={(e) => updateSetting('trading.showDemoTrades', e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Confirm Before Delete</label>
+                        <p className="text-xs text-gray-500">Show confirmation dialog when deleting trades</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.trading.confirmBeforeDelete}
+                          onChange={(e) => updateSetting('trading.confirmBeforeDelete', e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Brokers Settings */}
+            {activeTab === 'brokers' && (
+              <div className="space-y-6">
+                {/* Connected Brokers Overview */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Connected Brokers</h2>
+                  {settings.brokers.connectedBrokers.length > 0 ? (
+                    <div className="space-y-4">
+                      {settings.brokers.connectedBrokers.map((brokerId) => {
+                        const broker = availableBrokers.find(b => b.id === brokerId)
+                        return broker ? (
+                          <div key={brokerId} className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center">
+                              <span className="text-2xl mr-3">{broker.logo}</span>
+                              <div>
+                                <h3 className="font-semibold text-gray-900">{broker.name}</h3>
+                                <p className="text-sm text-green-600">✓ Connected & Syncing</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleDisconnectBroker(brokerId)}
+                              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                            >
+                              Disconnect
+                            </button>
+                          </div>
+                        ) : null
+                      })}
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div>
+                          <p className="text-sm text-gray-600">Last sync: {settings.brokers.lastSync ? new Date(settings.brokers.lastSync).toLocaleString() : 'Never'}</p>
+                        </div>
+                        <button
+                          onClick={handleSyncNow}
+                          disabled={saving}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        >
+                          {saving ? 'Syncing...' : 'Sync Now'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No brokers connected yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Connect your brokerage accounts to automatically sync trades</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Available Brokers */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Available Indian Brokers</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {availableBrokers.map((broker) => (
+                      <div key={broker.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center">
+                            <span className="text-2xl mr-3">{broker.logo}</span>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{broker.name}</h3>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                broker.status === 'connected' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {broker.status === 'connected' ? 'Connected' : 'Available'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 mb-3">{broker.description}</p>
+                        
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Features:</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {broker.features.map((feature, index) => (
+                              <span key={index} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                                {feature}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {broker.status === 'connected' ? (
+                          <button
+                            onClick={() => handleDisconnectBroker(broker.id)}
+                            className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                          >
+                            Disconnect
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleConnectBroker(broker.id)}
+                            disabled={connectingBroker === broker.id}
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            {connectingBroker === broker.id ? 'Connecting...' : 'Connect'}
+                          </button>
+                        )}
+                        
+                        {broker.requiresAPI && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            * Requires API key setup
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Appearance Settings */}
+            {activeTab === 'appearance' && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Appearance & Display</h2>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                    <select
+                      value={settings.appearance.theme}
+                      onChange={(e) => updateSetting('appearance.theme', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                      <option value="auto">Auto (System)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date Format</label>
+                    <select
+                      value={settings.appearance.dateFormat}
+                      onChange={(e) => updateSetting('appearance.dateFormat', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                      <option value="MMM DD, YYYY">MMM DD, YYYY</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Currency Display</label>
+                    <select
+                      value={settings.appearance.currency}
+                      onChange={(e) => updateSetting('appearance.currency', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="JPY">JPY (¥)</option>
+                      <option value="INR">INR (₹)</option>
+                      <option value="CAD">CAD (C$)</option>
+                      <option value="AUD">AUD (A$)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Decimal Places</label>
+                    <select
+                      value={settings.appearance.decimalPlaces}
+                      onChange={(e) => updateSetting('appearance.decimalPlaces', parseInt(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="0">0</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Number of decimal places for price and P&L display</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Notification Settings */}
+            {activeTab === 'notifications' && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Notification Preferences</h2>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Email Notifications</label>
+                      <p className="text-xs text-gray-500">Receive notifications via email</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.notifications.email}
+                        onChange={(e) => updateSetting('notifications.email', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Browser Notifications</label>
+                      <p className="text-xs text-gray-500">Show desktop notifications in browser</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.notifications.browser}
+                        onChange={(e) => updateSetting('notifications.browser', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Trade Alerts</label>
+                      <p className="text-xs text-gray-500">Get notified about trade-related events</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.notifications.tradeAlerts}
+                        onChange={(e) => updateSetting('notifications.tradeAlerts', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Weekly Reports</label>
+                      <p className="text-xs text-gray-500">Receive weekly trading performance summaries</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={settings.notifications.weeklyReports}
+                        onChange={(e) => updateSetting('notifications.weeklyReports', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Save Button */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
               <div className="flex items-center justify-between">
