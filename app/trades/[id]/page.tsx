@@ -17,7 +17,9 @@ export default function TradeDetailsPage() {
       try {
         const response = await fetch(`/api/trades/${params.id}`);
         if (response.ok) {
-          const data = await response.json();
+          const result = await response.json();
+          // Handle the API response format that includes success and data fields
+          const data = result.data || result;
           setTrade(data);
         } else {
           console.error('Trade not found');
@@ -34,7 +36,14 @@ export default function TradeDetailsPage() {
     }
   }, [params.id]);
 
-  const formatCurrency = (amount: number): string => {
+  const formatCurrency = (amount: number | null | undefined): string => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 2,
+      }).format(0);
+    }
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -42,7 +51,10 @@ export default function TradeDetailsPage() {
     }).format(amount);
   };
 
-  const formatNumber = (value: number): string => {
+  const formatNumber = (value: number | null | undefined): string => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '0.00';
+    }
     return value.toFixed(2);
   };
 
@@ -149,7 +161,9 @@ export default function TradeDetailsPage() {
       try {
         const response = await fetch(`/api/trades/${params.id}`);
         if (response.ok) {
-          const data = await response.json();
+          const result = await response.json();
+          // Handle the API response format that includes success and data fields
+          const data = result.data || result;
           setTrade(data);
         }
       } catch (error) {
@@ -319,14 +333,14 @@ export default function TradeDetailsPage() {
                 <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 border border-gray-200">
                   <p className="text-sm font-medium text-gray-600 mb-1">Total Investment</p>
                   <p className="text-xl font-bold text-gray-900">
-                    {formatCurrency(trade.entryPrice * trade.quantity)}
+                    {formatCurrency((trade.entryPrice || 0) * (trade.quantity || 0))}
                   </p>
                 </div>
                 
                 <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 border border-gray-200">
                   <p className="text-sm font-medium text-gray-600 mb-1">Exit Value</p>
                   <p className="text-xl font-bold text-gray-900">
-                    {trade.exitPrice ? formatCurrency(trade.exitPrice * trade.quantity) : 'Pending'}
+                    {trade.exitPrice ? formatCurrency((trade.exitPrice || 0) * (trade.quantity || 0)) : 'Pending'}
                   </p>
                 </div>
                 

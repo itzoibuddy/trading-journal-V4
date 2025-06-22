@@ -53,47 +53,38 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    // Add a timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
-      if (status === 'loading') {
-        console.log('Session loading timeout - assuming unauthenticated');
-        setLoading(false);
-      }
-    }, 5000); // 5 second timeout
-
-    if (status === 'loading') return; // Still loading
-    
-    clearTimeout(loadingTimeout);
-    
-    if (status === 'unauthenticated') {
-      // Don't redirect, just show the sign-in state
+    // Simpler approach - set loading to false after initial render
+    // This prevents infinite loading when session status is stuck
+    const timer = setTimeout(() => {
       setLoading(false);
-      return;
-    }
-
-    const fetchTrades = async () => {
-      try {
-        const response = await fetch('/api/trades');
-        if (response.ok) {
-          const result = await response.json();
-          const tradesData = result.data || [];
-          setTrades(tradesData);
-          if (tradesData.length > 0) {
-            generateEquityCurve(tradesData);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching trades:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    }, 2000);
 
     if (status === 'authenticated') {
+      clearTimeout(timer);
+      const fetchTrades = async () => {
+        try {
+          const response = await fetch('/api/trades');
+          if (response.ok) {
+            const result = await response.json();
+            const tradesData = result.data || [];
+            setTrades(tradesData);
+            if (tradesData.length > 0) {
+              generateEquityCurve(tradesData);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching trades:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
       fetchTrades();
+    } else if (status === 'unauthenticated') {
+      clearTimeout(timer);
+      setLoading(false);
     }
 
-    return () => clearTimeout(loadingTimeout);
+    return () => clearTimeout(timer);
   }, [status]);
 
   const generateEquityCurve = (tradesData: Trade[]) => {
@@ -140,7 +131,7 @@ export default function HomePage() {
     });
   };
 
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
