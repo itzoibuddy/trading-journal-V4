@@ -32,24 +32,6 @@ interface UserSettings {
     showDemoTrades: boolean
     confirmBeforeDelete: boolean
   }
-  
-  // Broker Connections
-  brokers: {
-    connectedBrokers: string[]
-    autoSync: boolean
-    syncFrequency: string
-    lastSync: string | null
-  }
-}
-
-interface BrokerConfig {
-  id: string
-  name: string
-  logo: string
-  status: 'available' | 'connected' | 'error'
-  description: string
-  features: string[]
-  requiresAPI: boolean
 }
 
 export default function SettingsPage() {
@@ -59,7 +41,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [activeTab, setActiveTab] = useState('personal')
-  const [connectingBroker, setConnectingBroker] = useState<string | null>(null)
   
   const [settings, setSettings] = useState<UserSettings>({
     timezone: 'UTC',
@@ -83,100 +64,8 @@ export default function SettingsPage() {
       autoCalculatePL: true,
       showDemoTrades: true,
       confirmBeforeDelete: true
-    },
-    brokers: {
-      connectedBrokers: [],
-      autoSync: true,
-      syncFrequency: 'hourly',
-      lastSync: null
     }
   })
-
-  // Available brokers configuration
-  const availableBrokers: BrokerConfig[] = [
-    // Indian Brokers
-    {
-      id: 'zerodha',
-      name: 'Zerodha',
-      logo: '🔵',
-      status: settings.brokers.connectedBrokers.includes('zerodha') ? 'connected' : 'available',
-      description: 'India\'s largest discount broker with Kite Connect API',
-      features: ['Real-time trade sync', 'Portfolio data', 'Order history', 'Holdings', 'P&L tracking'],
-      requiresAPI: true
-    },
-    {
-      id: 'upstox',
-      name: 'Upstox',
-      logo: '🟠',
-      status: settings.brokers.connectedBrokers.includes('upstox') ? 'connected' : 'available',
-      description: 'Modern discount broker with powerful API and low brokerage',
-      features: ['Live market data', 'Order management', 'Portfolio tracking', 'Options chain'],
-      requiresAPI: true
-    },
-    {
-      id: 'angelone',
-      name: 'Angel One',
-      logo: '👼',
-      status: settings.brokers.connectedBrokers.includes('angelone') ? 'connected' : 'available',
-      description: 'Leading full-service broker with SmartAPI integration',
-      features: ['Trade sync', 'Research reports', 'Mutual funds', 'IPO applications'],
-      requiresAPI: true
-    },
-    {
-      id: 'dhan',
-      name: 'Dhan',
-      logo: '💎',
-      status: settings.brokers.connectedBrokers.includes('dhan') ? 'connected' : 'available',
-      description: 'Next-gen trading platform with advanced charting and analytics',
-      features: ['Advanced charts', 'Options strategies', 'Backtesting', 'Algo trading'],
-      requiresAPI: true
-    },
-    {
-      id: 'groww',
-      name: 'Groww',
-      logo: '🌱',
-      status: settings.brokers.connectedBrokers.includes('groww') ? 'connected' : 'available',
-      description: 'Popular platform for stocks, mutual funds and digital gold',
-      features: ['Stock trading', 'Mutual funds', 'SIP tracking', 'Goal planning'],
-      requiresAPI: true
-    },
-    {
-      id: '5paisa',
-      name: '5paisa',
-      logo: '💰',
-      status: settings.brokers.connectedBrokers.includes('5paisa') ? 'connected' : 'available',
-      description: 'Affordable brokerage with comprehensive trading solutions',
-      features: ['Low brokerage', 'Research reports', 'Mutual funds', 'Insurance'],
-      requiresAPI: true
-    },
-    {
-      id: 'icicidirect',
-      name: 'ICICI Direct',
-      logo: '🏛️',
-      status: settings.brokers.connectedBrokers.includes('icicidirect') ? 'connected' : 'available',
-      description: 'Full-service broker from ICICI Bank with research and advisory',
-      features: ['Research reports', 'Investment advisory', 'Mutual funds', 'IPO services'],
-      requiresAPI: true
-    },
-    {
-      id: 'fyers',
-      name: 'Fyers',
-      logo: '🚀',
-      status: settings.brokers.connectedBrokers.includes('fyers') ? 'connected' : 'available',
-      description: 'Technology-focused broker with advanced trading tools',
-      features: ['API trading', 'Advanced charts', 'Options strategies', 'Market scanner'],
-      requiresAPI: true
-    },
-    {
-      id: 'sasonline',
-      name: 'SAS Online',
-      logo: '📈',
-      status: settings.brokers.connectedBrokers.includes('sasonline') ? 'connected' : 'available',
-      description: 'Established broker with comprehensive trading and investment services',
-      features: ['Full-service trading', 'Research', 'Mutual funds', 'Portfolio management'],
-      requiresAPI: true
-    }
-  ]
 
   useEffect(() => {
     if (status === 'loading') return
@@ -233,44 +122,6 @@ export default function SettingsPage() {
     })
   }
 
-  const handleConnectBroker = async (brokerId: string) => {
-    setConnectingBroker(brokerId)
-    try {
-      // In production, this would redirect to broker OAuth or open API key setup
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate connection time
-      
-      const newConnectedBrokers = [...settings.brokers.connectedBrokers, brokerId]
-      updateSetting('brokers.connectedBrokers', newConnectedBrokers)
-      updateSetting('brokers.lastSync', new Date().toISOString())
-      
-      setMessage({ type: 'success', text: `Successfully connected to ${availableBrokers.find(b => b.id === brokerId)?.name}!` })
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to connect to broker. Please try again.' })
-    } finally {
-      setConnectingBroker(null)
-    }
-  }
-
-  const handleDisconnectBroker = (brokerId: string) => {
-    const newConnectedBrokers = settings.brokers.connectedBrokers.filter(id => id !== brokerId)
-    updateSetting('brokers.connectedBrokers', newConnectedBrokers)
-    setMessage({ type: 'success', text: `Disconnected from ${availableBrokers.find(b => b.id === brokerId)?.name}` })
-  }
-
-  const handleSyncNow = async () => {
-    setSaving(true)
-    try {
-      // In production, this would sync trades from connected brokers
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      updateSetting('brokers.lastSync', new Date().toISOString())
-      setMessage({ type: 'success', text: 'Successfully synced trades from connected brokers!' })
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to sync trades. Please try again.' })
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
@@ -282,7 +133,6 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'personal', label: 'Personal', icon: '👤' },
     { id: 'trading', label: 'Trading', icon: '📈' },
-    { id: 'brokers', label: 'Brokers', icon: '🔗' },
     { id: 'appearance', label: 'Appearance', icon: '🎨' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' }
   ]
@@ -484,120 +334,6 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Brokers Settings */}
-            {activeTab === 'brokers' && (
-              <div className="space-y-6">
-                {/* Connected Brokers Overview */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">Connected Brokers</h2>
-                  {settings.brokers.connectedBrokers.length > 0 ? (
-                    <div className="space-y-4">
-                      {settings.brokers.connectedBrokers.map((brokerId) => {
-                        const broker = availableBrokers.find(b => b.id === brokerId)
-                        return broker ? (
-                          <div key={brokerId} className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex items-center">
-                              <span className="text-2xl mr-3">{broker.logo}</span>
-                              <div>
-                                <h3 className="font-semibold text-gray-900">{broker.name}</h3>
-                                <p className="text-sm text-green-600">✓ Connected & Syncing</p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handleDisconnectBroker(brokerId)}
-                              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
-                            >
-                              Disconnect
-                            </button>
-                          </div>
-                        ) : null
-                      })}
-                      
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                        <div>
-                          <p className="text-sm text-gray-600">Last sync: {settings.brokers.lastSync ? new Date(settings.brokers.lastSync).toLocaleString() : 'Never'}</p>
-                        </div>
-                        <button
-                          onClick={handleSyncNow}
-                          disabled={saving}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                        >
-                          {saving ? 'Syncing...' : 'Sync Now'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">No brokers connected yet</p>
-                      <p className="text-sm text-gray-400 mt-1">Connect your brokerage accounts to automatically sync trades</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Available Brokers */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6">Available Indian Brokers</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availableBrokers.map((broker) => (
-                      <div key={broker.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center">
-                            <span className="text-2xl mr-3">{broker.logo}</span>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">{broker.name}</h3>
-                              <span className={`text-xs px-2 py-1 rounded-full ${
-                                broker.status === 'connected' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {broker.status === 'connected' ? 'Connected' : 'Available'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 mb-3">{broker.description}</p>
-                        
-                        <div className="mb-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Features:</h4>
-                          <div className="flex flex-wrap gap-1">
-                            {broker.features.map((feature, index) => (
-                              <span key={index} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                {feature}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {broker.status === 'connected' ? (
-                          <button
-                            onClick={() => handleDisconnectBroker(broker.id)}
-                            className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
-                          >
-                            Disconnect
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleConnectBroker(broker.id)}
-                            disabled={connectingBroker === broker.id}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                          >
-                            {connectingBroker === broker.id ? 'Connecting...' : 'Connect'}
-                          </button>
-                        )}
-                        
-                        {broker.requiresAPI && (
-                          <p className="text-xs text-gray-500 mt-2">
-                            * Requires API key setup
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Appearance Settings */}
             {activeTab === 'appearance' && (
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
@@ -626,12 +362,12 @@ export default function SettingsPage() {
                       <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                       <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                       <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                      <option value="MMM DD, YYYY">MMM DD, YYYY</option>
+                      <option value="DD MMM YYYY">DD MMM YYYY</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Currency Display</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
                     <select
                       value={settings.appearance.currency}
                       onChange={(e) => updateSetting('appearance.currency', e.target.value)}
@@ -654,19 +390,18 @@ export default function SettingsPage() {
                       onChange={(e) => updateSetting('appearance.decimalPlaces', parseInt(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="0">0</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
+                      <option value={0}>0</option>
+                      <option value={1}>1</option>
+                      <option value={2}>2</option>
+                      <option value={3}>3</option>
+                      <option value={4}>4</option>
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">Number of decimal places for price and P&L display</p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Notification Settings */}
+            {/* Notifications Settings */}
             {activeTab === 'notifications' && (
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Notification Preferences</h2>
@@ -674,7 +409,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Email Notifications</label>
-                      <p className="text-xs text-gray-500">Receive notifications via email</p>
+                      <p className="text-xs text-gray-500">Receive important updates via email</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -690,7 +425,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Browser Notifications</label>
-                      <p className="text-xs text-gray-500">Show desktop notifications in browser</p>
+                      <p className="text-xs text-gray-500">Show desktop notifications</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -706,7 +441,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Trade Alerts</label>
-                      <p className="text-xs text-gray-500">Get notified about trade-related events</p>
+                      <p className="text-xs text-gray-500">Notifications for trade execution and P&L updates</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -722,7 +457,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <label className="text-sm font-medium text-gray-700">Weekly Reports</label>
-                      <p className="text-xs text-gray-500">Receive weekly trading performance summaries</p>
+                      <p className="text-xs text-gray-500">Summary of trading performance and analytics</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -739,20 +474,21 @@ export default function SettingsPage() {
             )}
 
             {/* Save Button */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Save Changes</h3>
-                  <p className="text-sm text-gray-600">Your settings will be applied immediately</p>
-                </div>
-                <button
-                  onClick={handleSaveSettings}
-                  disabled={saving}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {saving ? 'Saving...' : 'Save Settings'}
-                </button>
-              </div>
+            <div className="flex justify-end">
+              <button
+                onClick={handleSaveSettings}
+                disabled={saving}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  'Save Settings'
+                )}
+              </button>
             </div>
           </div>
         </div>
