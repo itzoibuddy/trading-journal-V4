@@ -478,19 +478,19 @@ export default function RiskManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                   <div className="font-semibold text-green-800">✅ Conservative</div>
-                  <div className="text-sm text-green-700 mt-1">Risk: 0.5-1% | R:R ≥ 3:1</div>
+                  <div className="text-sm text-green-700 mt-1">Risk: 0.5-1% | R:R {'>'}= 3:1</div>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <div className="font-semibold text-blue-800">📊 Moderate</div>
-                  <div className="text-sm text-blue-700 mt-1">Risk: 1-2% | R:R ≥ 2:1</div>
+                  <div className="text-sm text-blue-700 mt-1">Risk: 1-2% | R:R {'>'}= 2:1</div>
                 </div>
                 <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                   <div className="font-semibold text-yellow-800">⚠️ Aggressive</div>
-                  <div className="text-sm text-yellow-700 mt-1">Risk: 2-3% | R:R ≥ 1.5:1</div>
+                  <div className="text-sm text-yellow-700 mt-1">Risk: 2-3% | R:R {'>'}= 1.5:1</div>
                 </div>
                 <div className="bg-red-50 p-4 rounded-lg border border-red-200">
                   <div className="font-semibold text-red-800">🚨 High Risk</div>
-                  <div className="text-sm text-red-700 mt-1">Risk: >3% | Not Recommended</div>
+                  <div className="text-sm text-red-700 mt-1">Risk: {'>'}3% | Not Recommended</div>
                 </div>
               </div>
             </div>
