@@ -24,16 +24,16 @@ const formatQuantityAsLots = (quantity: number, symbol: string): string => {
 // Helper function to get trade type icon text
 const getTradeTypeIcon = (instrumentType: string): string => {
   switch (instrumentType?.toLowerCase()) {
-    case 'stock': return '📈 STOCK';
-    case 'options': return '🔧 OPTIONS';
-    case 'futures': return '⚡ FUTURES';
-    default: return '💼 TRADE';
+    case 'stock': return 'STOCK';
+    case 'options': return 'OPTIONS';
+    case 'futures': return 'FUTURES';
+    default: return 'TRADE';
   }
 };
 
 // Helper function to get position type symbol
 const getPositionTypeSymbol = (type: string): string => {
-  return type?.toLowerCase() === 'long' ? '📈 LONG' : '📉 SHORT';
+  return type?.toLowerCase() === 'long' ? 'LONG' : 'SHORT';
 };
 
 export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
@@ -66,7 +66,7 @@ export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
     if (isNaN(date.getTime())) return 'Invalid date';
     return date.toLocaleDateString('en-IN', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -75,7 +75,7 @@ export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
 
   const calculateTradeDuration = (entryDate: string | Date | null | undefined, exitDate: string | Date | null | undefined) => {
     if (!entryDate) return 'No entry date';
-    if (!exitDate) return 'Position still open';
+    if (!exitDate) return 'Position open';
     
     const entry = typeof entryDate === 'string' ? new Date(entryDate) : entryDate;
     const exit = typeof exitDate === 'string' ? new Date(exitDate) : exitDate;
@@ -89,10 +89,10 @@ export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
     
     if (diffDays === 0) {
       if (diffHours === 0) {
-        if (diffMinutes === 0) return 'Less than 1 minute';
-        return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''}`;
+        if (diffMinutes === 0) return '< 1 min';
+        return `${diffMinutes} min`;
       }
-      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ${diffMinutes % 60} min`;
+      return `${diffHours}h ${diffMinutes % 60}m`;
     }
     
     if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
@@ -106,281 +106,244 @@ export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
     return `${months} month${months !== 1 ? 's' : ''}`;
   };
 
-  let yPosition = 20;
+  let yPosition = 15;
 
-  // Header with enhanced branding
+  // Header with improved design
   pdf.setFillColor(79, 70, 229);
-  pdf.rect(0, 0, pageWidth, 45, 'F');
+  pdf.rect(0, 0, pageWidth, 35, 'F');
   
-  // Logo/Brand area with icon
+  // Logo/Brand area
   pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(28);
+  pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📊 Trading Journal', 20, 25);
+  pdf.text('Trading Journal', 15, 20);
   
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('Professional Trading Platform - Complete Trade Analysis', 20, 35);
-  
-  // Date and export info
-  pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(10);
-  const currentDate = new Date().toLocaleDateString('en-IN');
-  pdf.text(`Generated: ${currentDate}`, pageWidth - 60, 25);
-  pdf.text(`Trade ID: ${trade.id || 'N/A'}`, pageWidth - 60, 35);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Professional Trading Platform - Complete Trade Analysis', 15, 28);
   
-  yPosition = 60;
+  // Date and trade info on right
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(9);
+  const currentDate = new Date().toLocaleDateString('en-IN');
+  pdf.text(`Generated: ${currentDate}`, pageWidth - 55, 18);
+  pdf.text(`Trade ID: ${trade.id || 'N/A'}`, pageWidth - 55, 25);
+  
+  yPosition = 45;
 
   // User information section
   pdf.setTextColor(0, 0, 0);
-  pdf.setFontSize(16);
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📋 Trade Report', 20, yPosition);
+  pdf.text('Trade Report', 15, yPosition);
   
-  yPosition += 8;
-  pdf.setFontSize(10);
+  yPosition += 10;
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(`👤 Trader: ${userInfo.name}`, 20, yPosition);
+  pdf.text(`Trader: ${userInfo.name}`, 15, yPosition);
   yPosition += 5;
-  pdf.text(`📧 Email: ${userInfo.email}`, 20, yPosition);
+  pdf.text(`Email: ${userInfo.email}`, 15, yPosition);
   
   yPosition += 15;
 
-  // Trade title section with enhanced styling
+  // Trade title section
   pdf.setDrawColor(79, 70, 229);
-  pdf.setLineWidth(1);
-  pdf.line(20, yPosition, pageWidth - 20, yPosition);
+  pdf.setLineWidth(0.5);
+  pdf.line(15, yPosition, pageWidth - 15, yPosition);
   
-  yPosition += 12;
-  pdf.setFontSize(22);
+  yPosition += 10;
+  pdf.setFontSize(18);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(79, 70, 229);
-  pdf.text(`${getTradeTypeIcon(trade.instrumentType)} ${trade.symbol}`, 20, yPosition);
+  pdf.text(`${getTradeTypeIcon(trade.instrumentType)} ${trade.symbol}`, 15, yPosition);
   
   yPosition += 8;
-  pdf.setFontSize(12);
+  pdf.setFontSize(11);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(107, 114, 128);
   const positionInfo = `${getPositionTypeSymbol(trade.type)} • ${trade.strategy || 'No Strategy Specified'}`;
-  pdf.text(positionInfo, 20, yPosition);
+  pdf.text(positionInfo, 15, yPosition);
   
-  // Trade status and P&L with enhanced styling
+  // Trade status and P&L on the right
   const profitLoss = trade.profitLoss || 0;
   const isProfit = profitLoss > 0;
   const isLoss = profitLoss < 0;
   
+  pdf.setFontSize(10);
+  pdf.setTextColor(107, 114, 128);
   if (isProfit) {
-    pdf.setTextColor(16, 185, 129); // Green
-    pdf.text('✅ PROFIT', pageWidth - 70, yPosition - 16);
+    pdf.setTextColor(16, 185, 129);
+    pdf.text('PROFIT', pageWidth - 50, yPosition - 8);
   } else if (isLoss) {
-    pdf.setTextColor(239, 68, 68); // Red
-    pdf.text('❌ LOSS', pageWidth - 70, yPosition - 16);
+    pdf.setTextColor(239, 68, 68);
+    pdf.text('LOSS', pageWidth - 40, yPosition - 8);
   } else {
-    pdf.setTextColor(107, 114, 128); // Gray
-    pdf.text('⏳ PENDING', pageWidth - 70, yPosition - 16);
+    pdf.text('PENDING', pageWidth - 50, yPosition - 8);
   }
   
   pdf.setTextColor(isProfit ? 16 : isLoss ? 239 : 107, isProfit ? 185 : isLoss ? 68 : 114, isProfit ? 129 : isLoss ? 68 : 128);
-  pdf.setFontSize(18);
+  pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(formatCurrency(profitLoss), pageWidth - 70, yPosition - 4);
+  pdf.text(formatCurrency(profitLoss), pageWidth - 60, yPosition);
   
   yPosition += 15;
 
-  // Trade overview enhanced box
+  // Trade overview box
   pdf.setFillColor(248, 250, 252);
-  pdf.setDrawColor(79, 70, 229);
+  pdf.setDrawColor(229, 231, 235);
   pdf.setLineWidth(0.5);
-  pdf.rect(20, yPosition, pageWidth - 40, 55, 'FD');
+  pdf.rect(15, yPosition, pageWidth - 30, 40, 'FD');
   
-  yPosition += 12;
+  yPosition += 8;
   
-  // Trade information grid
+  // Trade information in two columns
   pdf.setTextColor(0, 0, 0);
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   
-  // Row 1
+  // Left column
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📅 Entry Date:', 25, yPosition);
+  pdf.text('Entry Date:', 20, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(formatDate(trade.entryDate), 70, yPosition);
+  pdf.text(formatDate(trade.entryDate), 45, yPosition);
   
+  yPosition += 6;
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📊 Status:', pageWidth/2 + 10, yPosition);
+  pdf.text('Exit Date:', 20, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(trade.exitDate ? '🔴 Closed' : '🟢 Open', pageWidth/2 + 35, yPosition);
+  pdf.text(trade.exitDate ? formatDate(trade.exitDate) : 'Position Open', 45, yPosition);
   
-  yPosition += 8;
-  
-  // Row 2
+  yPosition += 6;
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📤 Exit Date:', 25, yPosition);
+  pdf.text('Market:', 20, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(trade.exitDate ? formatDate(trade.exitDate) : '⏳ Position Open', 70, yPosition);
+  pdf.text(trade.marketCondition || 'Not Recorded', 40, yPosition);
   
+  // Right column
+  yPosition -= 12;
   pdf.setFont('helvetica', 'bold');
-  pdf.text('⏰ Duration:', pageWidth/2 + 10, yPosition);
+  pdf.text('Status:', pageWidth/2 + 5, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(calculateTradeDuration(trade.entryDate, trade.exitDate), pageWidth/2 + 40, yPosition);
+  pdf.text(trade.exitDate ? 'Closed' : 'Open', pageWidth/2 + 25, yPosition);
   
-  yPosition += 8;
-  
-  // Row 3
+  yPosition += 6;
   pdf.setFont('helvetica', 'bold');
-  pdf.text('🌍 Market:', 25, yPosition);
+  pdf.text('Duration:', pageWidth/2 + 5, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(trade.marketCondition || 'Not Recorded', 55, yPosition);
+  pdf.text(calculateTradeDuration(trade.entryDate, trade.exitDate), pageWidth/2 + 30, yPosition);
   
+  yPosition += 6;
   pdf.setFont('helvetica', 'bold');
-  pdf.text('⏱️ Timeframe:', pageWidth/2 + 10, yPosition);
+  pdf.text('Timeframe:', pageWidth/2 + 5, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(trade.timeFrame || 'Not Specified', pageWidth/2 + 45, yPosition);
-  
-  yPosition += 8;
-  
-  // Row 4 - Sector and Strategy
-  if (trade.sector) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('🏢 Sector:', 25, yPosition);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(trade.sector, 50, yPosition);
-  }
-  
-  if (trade.setupDescription) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('🎯 Setup:', pageWidth/2 + 10, yPosition);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(trade.setupDescription.substring(0, 25) + '...', pageWidth/2 + 35, yPosition);
-  }
+  pdf.text(trade.timeFrame || 'Not Specified', pageWidth/2 + 35, yPosition);
   
   yPosition += 20;
 
-  // Enhanced Price Information Table
-  pdf.setFontSize(16);
+  // Price Information Table
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(79, 70, 229);
-  pdf.text('💰 Price & Quantity Information', 20, yPosition);
+  pdf.text('Price & Quantity Information', 15, yPosition);
   
-  yPosition += 12;
+  yPosition += 8;
   
-  // Table headers with icons
-  pdf.setFillColor(79, 70, 229);
-  pdf.rect(20, yPosition - 6, pageWidth - 40, 10, 'F');
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Parameter', 25, yPosition);
-  pdf.text('Value', pageWidth/2, yPosition);
-  pdf.text('Details', pageWidth - 60, yPosition);
-  
-  yPosition += 12;
-  
-  // Enhanced table rows with all information
-  const priceData = [
-    ['💵 Entry Price', `₹${formatNumber(trade.entryPrice)}`, `Per unit`],
-    ['💸 Exit Price', trade.exitPrice ? `₹${formatNumber(trade.exitPrice)}` : '⏳ Pending', trade.exitPrice ? 'Per unit' : 'Not closed'],
-    ['📦 Quantity', formatQuantityAsLots(trade.quantity || 0, trade.symbol), trade.quantity ? `${trade.quantity} units` : 'N/A'],
-    ...(trade.strikePrice ? [['🎯 Strike Price', `₹${formatNumber(trade.strikePrice)}`, trade.optionType || 'Options']] : []),
-    ...(trade.expiryDate ? [['📅 Expiry Date', formatDate(trade.expiryDate), 'Contract expiry']] : []),
-    ...(trade.optionType ? [['🔧 Option Type', trade.optionType, 'Call/Put']] : []),
-    ...(trade.premium ? [['💎 Premium', `₹${formatNumber(trade.premium)}`, 'Per unit']] : []),
-    ['🛑 Stop Loss', trade.stopLoss ? `₹${formatNumber(trade.stopLoss)}` : '❌ Not Set', trade.stopLoss ? 'Risk management' : 'No protection'],
-    ['🎯 Target', trade.targetPrice ? `₹${formatNumber(trade.targetPrice)}` : '❌ Not Set', trade.targetPrice ? 'Profit target' : 'No target'],
+  // Table with better formatting
+  const tableData = [
+    ['Parameter', 'Value', 'Details'],
+    ['Entry Price', `₹${formatNumber(trade.entryPrice)}`, 'Per unit'],
+    ['Exit Price', trade.exitPrice ? `₹${formatNumber(trade.exitPrice)}` : 'Pending', trade.exitPrice ? 'Per unit' : 'Not closed'],
+    ['Quantity', formatQuantityAsLots(trade.quantity || 0, trade.symbol), `${trade.quantity || 0} units`],
+    ...(trade.strikePrice ? [['Strike Price', `₹${formatNumber(trade.strikePrice)}`, trade.optionType || 'Options']] : []),
+    ...(trade.optionType ? [['Option Type', trade.optionType, 'Call/Put']] : []),
+    ['Stop Loss', trade.stopLoss ? `₹${formatNumber(trade.stopLoss)}` : 'Not Set', 'Risk management'],
+    ['Target', trade.targetPrice ? `₹${formatNumber(trade.targetPrice)}` : 'Not Set', 'Profit target'],
   ];
   
+  // Table header
+  pdf.setFillColor(79, 70, 229);
+  pdf.rect(15, yPosition, pageWidth - 30, 8, 'F');
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Parameter', 20, yPosition + 5);
+  pdf.text('Value', 70, yPosition + 5);
+  pdf.text('Details', 130, yPosition + 5);
+  
+  yPosition += 8;
+  
+  // Table rows
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(8);
   
-  priceData.forEach((row, index) => {
-    if (index % 2 === 0) {
+  for (let i = 1; i < tableData.length; i++) {
+    const row = tableData[i];
+    
+    // Alternating row colors
+    if (i % 2 === 0) {
       pdf.setFillColor(248, 250, 252);
     } else {
       pdf.setFillColor(255, 255, 255);
     }
-    pdf.rect(20, yPosition - 4, pageWidth - 40, 8, 'F');
+    pdf.rect(15, yPosition, pageWidth - 30, 6, 'F');
     
     pdf.setFont('helvetica', 'bold');
-    pdf.text(row[0], 25, yPosition);
+    pdf.text(row[0], 20, yPosition + 4);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(row[1], pageWidth/2, yPosition);
-    pdf.setFontSize(8);
+    pdf.text(row[1], 70, yPosition + 4);
     pdf.setTextColor(107, 114, 128);
-    pdf.text(row[2], pageWidth - 60, yPosition);
-    pdf.setFontSize(9);
+    pdf.text(row[2], 130, yPosition + 4);
     pdf.setTextColor(0, 0, 0);
-    yPosition += 8;
-  });
+    yPosition += 6;
+  }
   
   yPosition += 10;
 
-  // Enhanced Investment Summary
-  pdf.setFontSize(16);
+  // Investment Summary
+  pdf.setFontSize(12);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(79, 70, 229);
-  pdf.text('📊 Investment Summary', 20, yPosition);
+  pdf.text('Investment Summary', 15, yPosition);
   
-  yPosition += 12;
+  yPosition += 8;
   
   const totalInvestment = (trade.entryPrice || 0) * (trade.quantity || 0);
   const exitValue = trade.exitPrice ? (trade.exitPrice || 0) * (trade.quantity || 0) : 0;
-  const riskAmount = trade.stopLoss ? Math.abs((trade.entryPrice || 0) - trade.stopLoss) * (trade.quantity || 0) : 0;
-  const targetGain = trade.targetPrice ? Math.abs(trade.targetPrice - (trade.entryPrice || 0)) * (trade.quantity || 0) : 0;
   
-  // Investment summary enhanced box
+  // Summary box
   pdf.setFillColor(248, 250, 252);
-  pdf.setDrawColor(79, 70, 229);
-  pdf.rect(20, yPosition - 6, pageWidth - 40, 35, 'FD');
+  pdf.setDrawColor(229, 231, 235);
+  pdf.rect(15, yPosition, pageWidth - 30, 20, 'FD');
   
-  yPosition += 4;
+  yPosition += 6;
   pdf.setTextColor(0, 0, 0);
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   
-  // Row 1
+  // Left side
   pdf.setFont('helvetica', 'bold');
-  pdf.text('💰 Total Investment:', 25, yPosition);
+  pdf.text('Total Investment:', 20, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(formatCurrency(totalInvestment), 80, yPosition);
+  pdf.text(formatCurrency(totalInvestment), 65, yPosition);
   
+  // Right side
   pdf.setFont('helvetica', 'bold');
-  pdf.text('💸 Exit Value:', pageWidth/2 + 10, yPosition);
+  pdf.text('Exit Value:', pageWidth/2 + 5, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(trade.exitPrice ? formatCurrency(exitValue) : '⏳ Pending', pageWidth/2 + 50, yPosition);
+  pdf.text(trade.exitPrice ? formatCurrency(exitValue) : 'Pending', pageWidth/2 + 35, yPosition);
   
   yPosition += 8;
   
-  // Row 2
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📈 Net P&L:', 25, yPosition);
+  pdf.text('Net P&L:', 20, yPosition);
   pdf.setTextColor(isProfit ? 16 : isLoss ? 239 : 107, isProfit ? 185 : isLoss ? 68 : 114, isProfit ? 129 : isLoss ? 68 : 128);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(formatCurrency(profitLoss), 65, yPosition);
+  pdf.text(formatCurrency(profitLoss), 50, yPosition);
   
   pdf.setTextColor(0, 0, 0);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('⚖️ Risk/Reward:', pageWidth/2 + 10, yPosition);
+  pdf.text('Risk/Reward:', pageWidth/2 + 5, yPosition);
   pdf.setFont('helvetica', 'normal');
-  pdf.text(trade.riskRewardRatio ? `1:${formatNumber(trade.riskRewardRatio)}` : 'Not calculated', pageWidth/2 + 60, yPosition);
-  
-  yPosition += 8;
-  
-  // Row 3
-  if (riskAmount > 0) {
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('🛑 Risk Amount:', 25, yPosition);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(239, 68, 68);
-    pdf.text(formatCurrency(riskAmount), 75, yPosition);
-  }
-  
-  if (targetGain > 0) {
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('🎯 Target Gain:', pageWidth/2 + 10, yPosition);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(16, 185, 129);
-    pdf.text(formatCurrency(targetGain), pageWidth/2 + 55, yPosition);
-  }
+  pdf.text(trade.riskRewardRatio ? `1:${formatNumber(trade.riskRewardRatio)}` : 'Not calculated', pageWidth/2 + 45, yPosition);
   
   yPosition += 20;
 
@@ -390,165 +353,162 @@ export const generateTradePDF = async (trade: Trade, userInfo: UserInfo) => {
     yPosition = 20;
   }
 
-  // Enhanced Psychology Section
+  // Psychology Section
   if (trade.preTradeEmotion || trade.postTradeEmotion || trade.tradeConfidence || trade.tradeRating) {
     pdf.setTextColor(79, 70, 229);
-    pdf.setFontSize(16);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('🧠 Trading Psychology', 20, yPosition);
+    pdf.text('Trading Psychology', 15, yPosition);
     
-    yPosition += 12;
+    yPosition += 8;
     
     // Psychology box
     pdf.setFillColor(254, 252, 232);
     pdf.setDrawColor(217, 119, 6);
-    pdf.rect(20, yPosition - 6, pageWidth - 40, 30, 'FD');
+    pdf.rect(15, yPosition, pageWidth - 30, 25, 'FD');
     
-    yPosition += 4;
+    yPosition += 6;
     pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(10);
+    pdf.setFontSize(8);
     
     if (trade.preTradeEmotion) {
       pdf.setFont('helvetica', 'bold');
-      pdf.text('😊 Pre-Trade Emotion:', 25, yPosition);
+      pdf.text('Pre-Trade Emotion:', 20, yPosition);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(trade.preTradeEmotion, 90, yPosition);
-      yPosition += 6;
+      pdf.text(trade.preTradeEmotion, 70, yPosition);
+      yPosition += 5;
     }
     
     if (trade.postTradeEmotion) {
       pdf.setFont('helvetica', 'bold');
-      pdf.text('😌 Post-Trade Emotion:', 25, yPosition);
+      pdf.text('Post-Trade Emotion:', 20, yPosition);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(trade.postTradeEmotion, 95, yPosition);
-      yPosition += 6;
+      pdf.text(trade.postTradeEmotion, 75, yPosition);
+      yPosition += 5;
     }
     
     if (trade.tradeConfidence) {
       pdf.setFont('helvetica', 'bold');
-      pdf.text('💪 Confidence Level:', 25, yPosition);
+      pdf.text('Confidence Level:', 20, yPosition);
       pdf.setFont('helvetica', 'normal');
-      const stars = '⭐'.repeat(Math.min(trade.tradeConfidence, 10));
-      pdf.text(`${trade.tradeConfidence}/10 ${stars}`, 85, yPosition);
+      pdf.text(`${trade.tradeConfidence}/10`, 65, yPosition);
       
       if (trade.tradeRating) {
         pdf.setFont('helvetica', 'bold');
-        pdf.text('📊 Trade Rating:', pageWidth/2 + 10, yPosition);
+        pdf.text('Trade Rating:', pageWidth/2 + 5, yPosition);
         pdf.setFont('helvetica', 'normal');
-        const ratingStars = '⭐'.repeat(Math.min(trade.tradeRating, 10));
-        pdf.text(`${trade.tradeRating}/10 ${ratingStars}`, pageWidth/2 + 60, yPosition);
+        pdf.text(`${trade.tradeRating}/10`, pageWidth/2 + 40, yPosition);
       }
-      yPosition += 6;
+      yPosition += 5;
     } else if (trade.tradeRating) {
       pdf.setFont('helvetica', 'bold');
-      pdf.text('📊 Trade Rating:', 25, yPosition);
+      pdf.text('Trade Rating:', 20, yPosition);
       pdf.setFont('helvetica', 'normal');
-      const ratingStars = '⭐'.repeat(Math.min(trade.tradeRating, 10));
-      pdf.text(`${trade.tradeRating}/10 ${ratingStars}`, 75, yPosition);
-      yPosition += 6;
+      pdf.text(`${trade.tradeRating}/10`, 55, yPosition);
+      yPosition += 5;
     }
     
     yPosition += 15;
   }
 
-  // Chart section placeholder with enhanced design
+  // Chart section
   if (trade.setupImageUrl) {
     pdf.setTextColor(79, 70, 229);
-    pdf.setFontSize(16);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('📊 Chart Analysis', 20, yPosition);
+    pdf.text('Chart Analysis', 15, yPosition);
     
-    yPosition += 12;
+    yPosition += 8;
     
     // Chart frame
     pdf.setDrawColor(79, 70, 229);
-    pdf.setLineWidth(2);
-    pdf.rect(20, yPosition, pageWidth - 40, 40, 'S');
+    pdf.setLineWidth(1);
+    pdf.rect(15, yPosition, pageWidth - 30, 30, 'S');
     
     pdf.setTextColor(107, 114, 128);
-    pdf.setFontSize(12);
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
-    pdf.text('📈 Chart image was attached to this trade', 25, yPosition + 15);
-    pdf.text(`🔗 Image URL: ${trade.setupImageUrl?.substring(0, 50) || ''}...`, 25, yPosition + 25);
-    pdf.setFontSize(10);
-    pdf.text('💡 Note: Chart images are preserved in digital format', 25, yPosition + 35);
+    pdf.text('Chart image was attached to this trade', 20, yPosition + 10);
+    pdf.text(`Image URL: ${trade.setupImageUrl?.substring(0, 40) || ''}...`, 20, yPosition + 17);
+    pdf.setFontSize(8);
+    pdf.text('Note: Chart images are preserved in digital format', 20, yPosition + 24);
     
-    yPosition += 50;
+    yPosition += 40;
   }
 
-  // Enhanced Notes section
+  // Notes section
   if (trade.notes) {
     pdf.setTextColor(79, 70, 229);
-    pdf.setFontSize(16);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('📝 Trade Notes', 20, yPosition);
+    pdf.text('Trade Notes', 15, yPosition);
     
-    yPosition += 10;
+    yPosition += 8;
     pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(10);
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     
-    const maxWidth = pageWidth - 50;
+    const maxWidth = pageWidth - 40;
     const lines = pdf.splitTextToSize(trade.notes, maxWidth);
     
-    const notesHeight = lines.length * 5 + 10;
+    const notesHeight = lines.length * 4 + 10;
     pdf.setFillColor(248, 250, 252);
     pdf.setDrawColor(229, 231, 235);
-    pdf.rect(20, yPosition - 2, pageWidth - 40, notesHeight, 'FD');
+    pdf.rect(15, yPosition, pageWidth - 30, notesHeight, 'FD');
     
-    yPosition += 6;
+    yPosition += 5;
     lines.forEach((line: string) => {
-      pdf.text(line, 25, yPosition);
-      yPosition += 5;
+      pdf.text(line, 20, yPosition);
+      yPosition += 4;
     });
     
     yPosition += 10;
   }
 
-  // Enhanced Lessons learned section
+  // Lessons learned section
   if (trade.lessons || trade.lessonsLearned) {
     const lessons = trade.lessons || trade.lessonsLearned || '';
     pdf.setTextColor(79, 70, 229);
-    pdf.setFontSize(16);
+    pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('🎓 Lessons Learned', 20, yPosition);
+    pdf.text('Lessons Learned', 15, yPosition);
     
-    yPosition += 10;
+    yPosition += 8;
     pdf.setTextColor(0, 0, 0);
-    pdf.setFontSize(10);
+    pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     
-    const maxWidth = pageWidth - 50;
+    const maxWidth = pageWidth - 40;
     const lines = pdf.splitTextToSize(lessons, maxWidth);
     
-    const lessonsHeight = lines.length * 5 + 10;
+    const lessonsHeight = lines.length * 4 + 10;
     pdf.setFillColor(254, 252, 232);
     pdf.setDrawColor(217, 119, 6);
-    pdf.rect(20, yPosition - 2, pageWidth - 40, lessonsHeight, 'FD');
+    pdf.rect(15, yPosition, pageWidth - 30, lessonsHeight, 'FD');
     
-    yPosition += 6;
+    yPosition += 5;
     lines.forEach((line: string) => {
-      pdf.text(line, 25, yPosition);
-      yPosition += 5;
+      pdf.text(line, 20, yPosition);
+      yPosition += 4;
     });
     
     yPosition += 10;
   }
 
-  // Enhanced Footer
-  const footerY = pageHeight - 25;
+  // Footer
+  const footerY = pageHeight - 20;
   pdf.setDrawColor(229, 231, 235);
-  pdf.line(20, footerY - 10, pageWidth - 20, footerY - 10);
+  pdf.line(15, footerY - 5, pageWidth - 15, footerY - 5);
   
   pdf.setTextColor(107, 114, 128);
-  pdf.setFontSize(8);
+  pdf.setFontSize(7);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('📊 Generated by Trading Journal - Professional Trading Platform', 20, footerY - 5);
-  pdf.text(`🕒 ${new Date().toLocaleString('en-IN')}`, 20, footerY);
-  pdf.text('Page 1 of 1', pageWidth - 30, footerY - 5);
-  pdf.text(`📄 Trade Report: ${trade.symbol}`, pageWidth - 60, footerY);
+  pdf.text('Generated by Trading Journal - Professional Trading Platform', 15, footerY);
+  pdf.text(`${new Date().toLocaleString('en-IN')}`, 15, footerY + 5);
+  pdf.text('Page 1 of 1', pageWidth - 25, footerY);
+  pdf.text(`Trade Report: ${trade.symbol}`, pageWidth - 70, footerY + 5);
   
-  // Save the PDF with enhanced filename
+  // Save the PDF with improved filename
   const profitStatus = isProfit ? 'PROFIT' : isLoss ? 'LOSS' : 'PENDING';
   const fileName = `${trade.symbol}_${trade.instrumentType}_${profitStatus}_${new Date().toISOString().split('T')[0]}.pdf`;
   pdf.save(fileName);
