@@ -38,6 +38,13 @@ export default function RiskManagementPage() {
   const [tradeType, setTradeType] = useState<'LONG' | 'SHORT'>('LONG');
   const [winRate, setWinRate] = useState<number>(60);
   const [instrumentType, setInstrumentType] = useState<'EQUITY' | 'OPTIONS' | 'FUTURES'>('EQUITY');
+
+  // Default risk parameters by instrument type
+  const defaultRiskParams = {
+    EQUITY: { risk: 1, lotSize: 1, margin: 100 },
+    FUTURES: { risk: 3, lotSize: 75, margin: 20 },
+    OPTIONS: { risk: 4, lotSize: 75, margin: 100 }
+  };
   
   // Advanced options
   const [lotSize, setLotSize] = useState<number>(1);
@@ -62,6 +69,15 @@ export default function RiskManagementPage() {
 
   // Active tool
   const [activeTool, setActiveTool] = useState<'position' | 'portfolio' | 'correlation' | 'volatility'>('position');
+
+  // Handle instrument type change with auto risk adjustment
+  const handleInstrumentTypeChange = (newType: 'EQUITY' | 'OPTIONS' | 'FUTURES') => {
+    const params = defaultRiskParams[newType];
+    setInstrumentType(newType);
+    setRiskPercentage(params.risk);
+    setLotSize(params.lotSize);
+    setMarginRequired(params.margin === 100 ? 100 : params.margin); // 100% means no leverage
+  };
 
   // Portfolio risk state
   const [portfolioPositions, setPortfolioPositions] = useState([
@@ -240,6 +256,9 @@ export default function RiskManagementPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Risk per Trade: {riskPercentage}%
+                        <span className="ml-2 text-xs text-blue-600">
+                          (Auto-set for {instrumentType.toLowerCase()})
+                        </span>
                       </label>
                       <input
                         type="range"
@@ -262,12 +281,12 @@ export default function RiskManagementPage() {
                       </label>
                       <select
                         value={instrumentType}
-                        onChange={(e) => setInstrumentType(e.target.value as any)}
+                        onChange={(e) => handleInstrumentTypeChange(e.target.value as any)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="EQUITY">Equity</option>
-                        <option value="FUTURES">Futures</option>
-                        <option value="OPTIONS">Options</option>
+                        <option value="EQUITY">📈 Equity (1% risk)</option>
+                        <option value="FUTURES">⚡ Futures (3% risk)</option>
+                        <option value="OPTIONS">🎯 Options (4% risk)</option>
                       </select>
                     </div>
 
@@ -366,6 +385,9 @@ export default function RiskManagementPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Margin Required (%)
+                          <span className="ml-2 text-xs text-gray-500">
+                            (Auto-set for {instrumentType.toLowerCase()})
+                          </span>
                         </label>
                         <input
                           type="number"
