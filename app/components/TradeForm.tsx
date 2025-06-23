@@ -623,6 +623,21 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
               />
             </div>
 
+            {/* Pre-Trade Emotion */}
+            <div>
+              <label htmlFor="preTradeEmotion" className="block text-sm font-semibold text-gray-700 mb-2">Pre-Trade Emotion</label>
+              <select
+                id="preTradeEmotion"
+                {...register('preTradeEmotion')}
+                className="block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white/90 backdrop-blur-sm px-4 py-3 text-sm transition-all duration-300 hover:shadow-md"
+              >
+                <option value="">Select Emotion</option>
+                {PRE_TRADE_EMOTIONS.map(emotion => (
+                  <option key={emotion.value} value={emotion.value}>{emotion.label}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Post-Trade Emotion */}
             <div>
               <label htmlFor="postTradeEmotion" className="block text-sm font-semibold text-gray-700 mb-2">Post-Trade Emotion</label>
