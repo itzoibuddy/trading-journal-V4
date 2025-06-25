@@ -15,7 +15,7 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -37,7 +37,15 @@ const authOptions: NextAuthOptions = {
           const { email, password } = loginSchema.parse(credentials)
           
           const user = await prisma.user.findUnique({
-            where: { email }
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              image: true,
+              role: true,
+              password: true
+            }
           })
 
           if (!user || !user.password) {
@@ -50,11 +58,11 @@ const authOptions: NextAuthOptions = {
             return null
           }
 
-          // Update last login
-          await prisma.user.update({
+          // Update last login - moved to background to avoid blocking auth
+          prisma.user.update({
             where: { id: user.id },
             data: { lastLoginAt: new Date() }
-          })
+          }).catch(console.error)
 
           return {
             id: user.id,
@@ -119,15 +127,16 @@ const authOptions: NextAuthOptions = {
       if (account?.provider === 'google') {
         try {
           const existingUser = await prisma.user.findUnique({
-            where: { email: user.email || '' }
+            where: { email: user.email || '' },
+            select: { id: true }
           })
 
           if (existingUser) {
-            // Update last login for existing Google users
-            await prisma.user.update({
+            // Update last login for existing Google users - background operation
+            prisma.user.update({
               where: { id: existingUser.id },
               data: { lastLoginAt: new Date() }
-            })
+            }).catch(console.error)
           }
           
           return true
@@ -146,11 +155,11 @@ const authOptions: NextAuthOptions = {
   events: {
     async signIn({ user, isNewUser }) {
       if (isNewUser) {
-        // Create demo trades for new users
-        await createDemoTrades(user.id!)
+        // Create demo trades for new users - background operation
+        createDemoTrades(user.id!).catch(console.error)
         
-        // Log user creation
-        await prisma.auditLog.create({
+        // Log user creation - background operation
+        prisma.auditLog.create({
           data: {
             userId: user.id!,
             action: 'USER_CREATED',
@@ -158,13 +167,15 @@ const authOptions: NextAuthOptions = {
             resourceId: user.id!,
             metadata: JSON.stringify({ isNewUser: true })
           }
-        })
+        }).catch(console.error)
       }
     }
   }
 }
 
+// Fix for Next.js 14 compatibility - use named exports
 const handler = NextAuth(authOptions)
+export { handler as GET, handler as POST }
 
 async function createDemoTrades(userId: string) {
   const demoTrades = [
@@ -228,6 +239,4 @@ async function createDemoTrades(userId: string) {
   await prisma.trade.createMany({
     data: demoTrades
   })
-}
-
-export { handler as GET, handler as POST, authOptions } 
+} 

@@ -184,4 +184,6 @@ function generateQuickInsights(trades: any[]): QuickInsight[] {
   }
 
   return insights.slice(0, 5); // Return top 5 insights
-} 
+}
+
+export const dynamic = 'force-dynamic'; 

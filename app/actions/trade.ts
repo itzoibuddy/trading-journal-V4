@@ -40,38 +40,68 @@ const tradeSchema = z.object({
 
 export type TradeFormData = z.infer<typeof tradeSchema>;
 
-export async function getTrades() {
+// Simple cache for user lookups to avoid repeated database hits
+const userCache = new Map<string, { user: any; expires: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function getCachedUser(email: string) {
+  const cached = userCache.get(email)
+  if (cached && cached.expires > Date.now()) {
+    return cached.user
+  }
+  return null
+}
+
+function setCachedUser(email: string, user: any) {
+  userCache.set(email, {
+    user,
+    expires: Date.now() + CACHE_TTL
+  })
+}
+
+async function getAuthenticatedUser() {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.email) {
-    return [];
+    return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email }
-  });
+  // Try cache first
+  let user = getCachedUser(session.user.email)
+  
+  if (!user) {
+    // Fetch from database if not cached
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true } // Only select what we need
+    });
+    
+    if (user) {
+      setCachedUser(session.user.email, user)
+    }
+  }
 
+  return user;
+}
+
+export async function getTrades() {
+  const user = await getAuthenticatedUser();
+  
   if (!user) {
     return [];
   }
 
+  // Add pagination to prevent loading too many trades at once
   return prisma.trade.findMany({
     where: { userId: user.id },
     orderBy: { entryDate: 'desc' },
+    take: 100 // Limit to 100 most recent trades
   });
 }
 
 export async function getTradesByDate(date: Date) {
-  const session = await getServerSession(authOptions);
+  const user = await getAuthenticatedUser();
   
-  if (!session?.user?.email) {
-    return [];
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email }
-  });
-
   if (!user) {
     return [];
   }
@@ -90,6 +120,7 @@ export async function getTradesByDate(date: Date) {
         lte: endOfDay,
       },
     },
+    orderBy: { entryDate: 'desc' }
   });
 }
 
@@ -100,175 +131,200 @@ const formatDecimal = (value: number | null | undefined): number | null => {
 };
 
 export async function createTrade(data: TradeFormData) {
-  const session = await getServerSession(authOptions);
+  const user = await getAuthenticatedUser();
   
-  if (!session?.user?.email) {
-    throw new Error('Unauthorized');
-  }
-
-  // Get the user from the database
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email }
-  });
-
   if (!user) {
-    throw new Error('User not found');
+    throw new Error('User not authenticated');
   }
 
-  const validatedData = tradeSchema.parse(data);
-  
-  const trade = await prisma.trade.create({
-    data: {
-      userId: user.id,
-      symbol: validatedData.symbol,
-      type: validatedData.type,
-      instrumentType: validatedData.instrumentType,
-      entryPrice: formatDecimal(validatedData.entryPrice)!,
-      exitPrice: formatDecimal(validatedData.exitPrice),
-      quantity: validatedData.quantity,
-      strikePrice: formatDecimal(validatedData.strikePrice),
-      expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : null,
-      optionType: validatedData.optionType || null,
-      premium: formatDecimal(validatedData.premium),
-      entryDate: new Date(validatedData.entryDate),
-      exitDate: validatedData.exitDate ? new Date(validatedData.exitDate) : null,
-      profitLoss: formatDecimal(validatedData.profitLoss),
-      notes: validatedData.notes || null,
-      sector: validatedData.sector || null,
-      strategy: validatedData.strategy || null,
-      setupImageUrl: validatedData.setupImageUrl || null,
-      preTradeEmotion: validatedData.preTradeEmotion || null,
-      postTradeEmotion: validatedData.postTradeEmotion || null,
-      tradeConfidence: validatedData.tradeConfidence || null,
-      tradeRating: validatedData.tradeRating || null,
-      lessons: validatedData.lessons || null,
-      riskRewardRatio: formatDecimal(validatedData.riskRewardRatio),
-      stopLoss: formatDecimal(validatedData.stopLoss),
-      targetPrice: formatDecimal(validatedData.targetPrice),
-      timeFrame: validatedData.timeFrame || null,
-      marketCondition: validatedData.marketCondition || null,
-    },
-  });
-  
-  revalidatePath('/trades');
-  revalidatePath('/calendar');
-  revalidatePath('/analytics');
-  revalidatePath('/heatmaps');
-  revalidatePath('/');
-  
-  return trade;
-}
-
-export async function updateTrade(id: number, data: TradeFormData) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.email) {
-    throw new Error('Unauthorized');
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email }
-  });
-
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  // Check if the trade belongs to the user
-  const existingTrade = await prisma.trade.findFirst({
-    where: { id, userId: user.id }
-  });
-
-  if (!existingTrade) {
-    throw new Error('Trade not found or unauthorized');
-  }
-
-  const validatedData = tradeSchema.parse(data);
-  
-  const trade = await prisma.trade.update({
-    where: { id },
-    data: {
-      symbol: validatedData.symbol,
-      type: validatedData.type,
-      instrumentType: validatedData.instrumentType,
-      entryPrice: formatDecimal(validatedData.entryPrice)!,
-      exitPrice: formatDecimal(validatedData.exitPrice),
-      quantity: validatedData.quantity,
-      strikePrice: formatDecimal(validatedData.strikePrice),
-      expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : null,
-      optionType: validatedData.optionType || null,
-      premium: formatDecimal(validatedData.premium),
-      entryDate: new Date(validatedData.entryDate),
-      exitDate: validatedData.exitDate ? new Date(validatedData.exitDate) : null,
-      profitLoss: formatDecimal(validatedData.profitLoss),
-      notes: validatedData.notes || null,
-      sector: validatedData.sector || null,
-      strategy: validatedData.strategy || null,
-      setupImageUrl: validatedData.setupImageUrl || null,
-      preTradeEmotion: validatedData.preTradeEmotion || null,
-      postTradeEmotion: validatedData.postTradeEmotion || null,
-      tradeConfidence: validatedData.tradeConfidence || null,
-      tradeRating: validatedData.tradeRating || null,
-      lessons: validatedData.lessons || null,
-      riskRewardRatio: formatDecimal(validatedData.riskRewardRatio),
-      stopLoss: formatDecimal(validatedData.stopLoss),
-      targetPrice: formatDecimal(validatedData.targetPrice),
-      timeFrame: validatedData.timeFrame || null,
-      marketCondition: validatedData.marketCondition || null,
-    },
-  });
-  
-  revalidatePath('/trades');
-  revalidatePath('/calendar');
-  revalidatePath('/analytics');
-  revalidatePath('/heatmaps');
-  revalidatePath('/');
-  
-  return trade;
-}
-
-export async function deleteTrade(id: number) {
   try {
-    const session = await getServerSession(authOptions);
+    const validatedData = tradeSchema.parse(data);
     
-    if (!session?.user?.email) {
-      throw new Error('Unauthorized');
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+    const trade = await prisma.trade.create({
+      data: {
+        userId: user.id,
+        symbol: validatedData.symbol,
+        type: validatedData.type,
+        instrumentType: validatedData.instrumentType,
+        entryPrice: formatDecimal(validatedData.entryPrice)!,
+        exitPrice: formatDecimal(validatedData.exitPrice),
+        quantity: validatedData.quantity,
+        strikePrice: formatDecimal(validatedData.strikePrice),
+        expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : null,
+        optionType: validatedData.optionType || null,
+        premium: formatDecimal(validatedData.premium),
+        entryDate: new Date(validatedData.entryDate),
+        exitDate: validatedData.exitDate ? new Date(validatedData.exitDate) : null,
+        profitLoss: formatDecimal(validatedData.profitLoss),
+        notes: validatedData.notes || null,
+        sector: validatedData.sector || null,
+        strategy: validatedData.strategy || null,
+        setupImageUrl: validatedData.setupImageUrl || null,
+        preTradeEmotion: validatedData.preTradeEmotion || null,
+        postTradeEmotion: validatedData.postTradeEmotion || null,
+        tradeConfidence: validatedData.tradeConfidence || null,
+        tradeRating: validatedData.tradeRating || null,
+        lessons: validatedData.lessons || null,
+        riskRewardRatio: formatDecimal(validatedData.riskRewardRatio),
+        stopLoss: formatDecimal(validatedData.stopLoss),
+        targetPrice: formatDecimal(validatedData.targetPrice),
+        timeFrame: validatedData.timeFrame || null,
+        marketCondition: validatedData.marketCondition || null,
+      },
     });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
+    // Log the action for audit
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'CREATE_TRADE',
+        resource: 'Trade',
+        resourceId: trade.id.toString(),
+        metadata: JSON.stringify({ 
+          symbol: trade.symbol,
+          type: trade.type,
+          entryPrice: trade.entryPrice 
+        })
+      }
+    });
 
-    // First check if the trade exists and belongs to the user
-    const existingTrade = await prisma.trade.findFirst({
-      where: { id, userId: user.id }
-    });
-    
-    if (!existingTrade) {
-      throw new Error(`Trade with ID ${id} not found or unauthorized`);
-    }
-    
-    await prisma.trade.delete({
-      where: { id },
-    });
-    
-    // Revalidate relevant paths
     revalidatePath('/trades');
     revalidatePath('/calendar');
     revalidatePath('/analytics');
     revalidatePath('/heatmaps');
     revalidatePath('/');
     
-    return { success: true, message: 'Trade deleted successfully' };
+    return trade;
   } catch (error) {
-    // Only log in development
-    if (process.env.NODE_ENV !== 'production') {
-      console.error(`Error deleting trade with ID ${id}:`, error);
+    console.error('Error creating trade:', error);
+    throw new Error('Failed to create trade');
+  }
+}
+
+export async function updateTrade(id: number, data: TradeFormData) {
+  const user = await getAuthenticatedUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  try {
+    // Verify the trade belongs to the user
+    const existingTrade = await prisma.trade.findFirst({
+      where: { 
+        id, 
+        userId: user.id 
+      },
+      select: { id: true }
+    });
+
+    if (!existingTrade) {
+      throw new Error('Trade not found or access denied');
     }
-    throw error;
+
+    const validatedData = tradeSchema.parse(data);
+    
+    const updatedTrade = await prisma.trade.update({
+      where: { id },
+      data: {
+        symbol: validatedData.symbol,
+        type: validatedData.type,
+        instrumentType: validatedData.instrumentType,
+        entryPrice: formatDecimal(validatedData.entryPrice)!,
+        exitPrice: formatDecimal(validatedData.exitPrice),
+        quantity: validatedData.quantity,
+        strikePrice: formatDecimal(validatedData.strikePrice),
+        expiryDate: validatedData.expiryDate ? new Date(validatedData.expiryDate) : null,
+        optionType: validatedData.optionType || null,
+        premium: formatDecimal(validatedData.premium),
+        entryDate: new Date(validatedData.entryDate),
+        exitDate: validatedData.exitDate ? new Date(validatedData.exitDate) : null,
+        profitLoss: formatDecimal(validatedData.profitLoss),
+        notes: validatedData.notes || null,
+        sector: validatedData.sector || null,
+        strategy: validatedData.strategy || null,
+        setupImageUrl: validatedData.setupImageUrl || null,
+        preTradeEmotion: validatedData.preTradeEmotion || null,
+        postTradeEmotion: validatedData.postTradeEmotion || null,
+        tradeConfidence: validatedData.tradeConfidence || null,
+        tradeRating: validatedData.tradeRating || null,
+        lessons: validatedData.lessons || null,
+        riskRewardRatio: formatDecimal(validatedData.riskRewardRatio),
+        stopLoss: formatDecimal(validatedData.stopLoss),
+        targetPrice: formatDecimal(validatedData.targetPrice),
+        timeFrame: validatedData.timeFrame || null,
+        marketCondition: validatedData.marketCondition || null,
+      },
+    });
+
+    // Log the action for audit
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'UPDATE_TRADE',
+        resource: 'Trade',
+        resourceId: id.toString(),
+        metadata: JSON.stringify({ 
+          updatedFields: Object.keys(data) 
+        })
+      }
+    });
+
+    revalidatePath('/trades');
+    revalidatePath('/calendar');
+    revalidatePath('/analytics');
+    revalidatePath('/heatmaps');
+    revalidatePath('/');
+    
+    return updatedTrade;
+  } catch (error) {
+    console.error('Error updating trade:', error);
+    throw new Error('Failed to update trade');
+  }
+}
+
+export async function deleteTrade(id: number) {
+  const user = await getAuthenticatedUser();
+  
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+
+  try {
+    // Verify the trade belongs to the user
+    const existingTrade = await prisma.trade.findFirst({
+      where: { 
+        id, 
+        userId: user.id 
+      },
+      select: { id: true, symbol: true }
+    });
+
+    if (!existingTrade) {
+      throw new Error('Trade not found or access denied');
+    }
+
+    await prisma.trade.delete({
+      where: { id },
+    });
+
+    // Log the action for audit
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'DELETE_TRADE',
+        resource: 'Trade',
+        resourceId: id.toString(),
+        metadata: JSON.stringify({ 
+          symbol: existingTrade.symbol 
+        })
+      }
+    });
+
+    revalidatePath('/trades');
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting trade:', error);
+    throw new Error('Failed to delete trade');
   }
 } 

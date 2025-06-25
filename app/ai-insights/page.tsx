@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getTrades } from '../actions/trade';
 import { Trade } from '../types/Trade';
 import { AIAnalytics, TradePattern, BehavioralInsight } from '../lib/ai-analytics';
-import { AdvancedAIAnalytics, AdvancedPattern, AdvancedInsight, PerformanceForecasting } from '../lib/advanced-ai-analytics';
+import { AdvancedAIAnalytics, AdvancedPattern, AdvancedInsight, PerformanceForecasting } from '../lib/advanced-ai-analytics'
 import TradingMindsetCoach from '../components/TradingMindsetCoach';
 import TabNavigation from '../components/AIInsights/TabNavigation';
 import SummaryStats from '../components/AIInsights/SummaryStats';

@@ -46,6 +46,13 @@ model User {
   updatedAt     DateTime @updatedAt
   lastLoginAt   DateTime?
   
+  // Critical indexes for performance
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([role, status])
+  @@index([createdAt])
+  @@index([lastLoginAt])
   @@map("users")
 }
 
@@ -102,6 +109,11 @@ model Trade {
   @@index([userId])
   @@index([userId, entryDate])
   @@index([userId, isDemo])
+  @@index([userId, createdAt])
+  @@index([userId, exitDate])
+  @@index([userId, type])
+  @@index([userId, symbol])
+  @@index([userId, instrumentType])
   @@index([symbol, entryDate])
   @@index([entryDate])
   @@index([exitDate])
@@ -109,6 +121,9 @@ model Trade {
   @@index([type])
   @@index([profitLoss])
   @@index([createdAt])
+  @@index([userId, entryDate, exitDate])
+  @@index([userId, isDemo, entryDate])
+  @@index([userId, type, entryDate])
 }
 
 // NextAuth required models
@@ -166,6 +181,7 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+  @@index([action, createdAt])
   @@map("audit_logs")
 }
 

@@ -66,7 +66,7 @@ export interface PsychologicalPattern {
   confidence: number;
   frequency: number;
   impact: 'positive' | 'negative' | 'neutral';
-  trades: any[];
+  trades: Trade[];
   triggers: string[];
   symptoms: string[];
 }
@@ -255,64 +255,6 @@ export class AdvancedAIAnalytics {
     return patterns;
   }
 
-  // Add missing method implementations
-  private createTradeSequences(): Array<{trades: any[], pattern: string, totalPnL: number}> {
-    // Create sequences of trades for pattern analysis
-    const sequences: Array<{trades: any[], pattern: string, totalPnL: number}> = [];
-    for (let i = 0; i < this.trades.length - 2; i++) {
-      const sequence = this.trades.slice(i, i + 3);
-      sequences.push({
-        trades: sequence,
-        pattern: sequence.map(t => t.profitLoss! > 0 ? 'W' : 'L').join(''),
-        totalPnL: sequence.reduce((sum, t) => sum + t.profitLoss!, 0)
-      });
-    }
-    return sequences;
-  }
-
-  private findFrequentSequences(sequences: any[], profitable: boolean): any[] {
-    const patternCounts = new Map();
-    const patternDetails = new Map();
-    
-    sequences.forEach(seq => {
-      const isProfit = seq.totalPnL > 0;
-      if (isProfit === profitable) {
-        const count = patternCounts.get(seq.pattern) || 0;
-        patternCounts.set(seq.pattern, count + 1);
-        
-        if (!patternDetails.has(seq.pattern)) {
-          patternDetails.set(seq.pattern, {
-            pattern: seq.pattern,
-            frequency: 0,
-            totalPnL: 0,
-            trades: []
-          });
-        }
-        
-        const details = patternDetails.get(seq.pattern);
-        details.frequency += 1;
-        details.totalPnL += seq.totalPnL;
-        details.trades.push(...seq.trades);
-      }
-    });
-    
-    return Array.from(patternDetails.values()).map(details => ({
-      ...details,
-      successRate: details.totalPnL > 0 ? 0.8 : 0.2,
-      accuracy: Math.min(details.frequency / sequences.length, 1),
-      predictivePower: details.frequency >= 3 ? 0.7 : 0.3,
-      description: `${details.pattern} pattern occurs ${details.frequency} times`,
-      conditions: [`Pattern: ${details.pattern}`, `Frequency: ${details.frequency}`],
-      outcomes: [{
-        scenario: profitable ? 'Profitable sequence' : 'Loss sequence',
-        probability: details.frequency / sequences.length,
-        expectedReturn: details.totalPnL / details.frequency,
-        riskLevel: profitable ? 0.3 : 0.7,
-        timeframe: 'short-term'
-      }]
-    }));
-  }
-
   // K-Means Clustering for Pattern Recognition
   private identifyClusterPatterns(): AdvancedPattern[] {
     const patterns: AdvancedPattern[] = [];
@@ -340,62 +282,6 @@ export class AdvancedAIAnalytics {
     });
     
     return patterns;
-  }
-
-  private performKMeansClustering(k: number): Array<{centroid: Map<any, any>, trades: any[]}> {
-    // Simplified K-means clustering implementation
-    const features = this.trades.map(trade => this.extractFeatures(trade));
-    const clusters: Array<{centroid: Map<any, any>, trades: any[]}> = [];
-    
-    // Initialize clusters
-    for (let i = 0; i < k; i++) {
-      clusters.push({
-        centroid: new Map(),
-        trades: []
-      });
-    }
-    
-    // Simple clustering based on profitLoss and position size
-    this.trades.forEach((trade, index) => {
-      const pnl = trade.profitLoss || 0;
-      const size = trade.quantity * trade.entryPrice;
-      
-      let clusterIndex = 0;
-      if (pnl > 0 && size > 1000) clusterIndex = 0; // Large profitable
-      else if (pnl > 0) clusterIndex = 1; // Small profitable  
-      else if (pnl < 0 && size > 1000) clusterIndex = 2; // Large loss
-      else clusterIndex = 3; // Small loss
-      
-      clusters[clusterIndex].trades.push(trade);
-    });
-    
-    return clusters;
-  }
-
-  private analyzeCluster(cluster: any): any {
-    const trades = cluster.trades;
-    const avgPnL = trades.reduce((sum: number, t: any) => sum + (t.profitLoss || 0), 0) / trades.length;
-    const winRate = trades.filter((t: any) => (t.profitLoss || 0) > 0).length / trades.length;
-    
-    return {
-      name: avgPnL > 0 ? 'Profitable Trading' : 'Loss Trading',
-      description: `Cluster with ${trades.length} trades, avg P&L: ${avgPnL.toFixed(2)}, win rate: ${(winRate * 100).toFixed(1)}%`,
-      confidence: winRate,
-      accuracy: winRate > 0.5 ? winRate : 1 - winRate,
-      predictivePower: trades.length >= 10 ? 0.7 : 0.5,
-      conditions: [
-        `Average P&L: ${avgPnL.toFixed(2)}`,
-        `Win Rate: ${(winRate * 100).toFixed(1)}%`,
-        `Sample Size: ${trades.length}`
-      ],
-      outcomes: [{
-        scenario: avgPnL > 0 ? 'Continued profitability' : 'Risk management needed',
-        probability: winRate,
-        expectedReturn: avgPnL,
-        riskLevel: avgPnL > 0 ? 0.3 : 0.7,
-        timeframe: 'medium-term'
-      }]
-    };
   }
 
   // Time Series Pattern Detection
