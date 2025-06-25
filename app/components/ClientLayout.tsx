@@ -49,45 +49,68 @@ function HeaderContent() {
   console.log('HeaderContent - Should show navigation:', shouldShowNavigation);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/30 shadow-lg shadow-blue-500/10">
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 border-b border-gray-200/50 shadow-sm">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-16">
           
-          {/* Logo/Brand */}
+          {/* Logo/Brand - Enhanced */}
           <div className="flex items-center flex-shrink-0">
             <Link href="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/30 transition-all duration-300 group-hover:scale-105">
-                <span className="text-white font-bold text-lg lg:text-xl">TJ</span>
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-200 group-hover:scale-105">
+                <span className="text-white font-bold text-base">TJ</span>
               </div>
               <div className="hidden sm:block">
-                <span className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent">
-                  Trading Journal
-                </span>
-                <div className="text-xs text-gray-500 font-medium -mt-1">
-                  Professional Trading Platform
-                </div>
+                <span className="text-xl font-bold text-gray-900">Trading Journal</span>
+                <div className="text-xs text-gray-500 font-medium -mt-0.5">Professional Platform</div>
               </div>
             </Link>
           </div>
 
-          {/* Desktop Navigation - Center */}
+          {/* Desktop Navigation - Simplified & Grouped */}
           {shouldShowNavigation && (
-            <div className="hidden lg:flex items-center justify-center flex-1 max-w-3xl mx-8">
-              <div className="flex items-center space-x-1 bg-white/60 backdrop-blur-sm rounded-2xl p-1 border border-white/40 shadow-inner">
-                <NavLink href="/" label="Dashboard" />
-                <NavLink href="/trades" label="Trades" />
-                <NavLink href="/analytics" label="Analytics" />
-                <NavLink href="/ai-insights" label="AI Insights" />
-                <NavLink href="/heatmaps" label="Heatmaps" />
-                <NavLink href="/risk-management" label="Risk" />
-                <NavLink href="/trading-plan" label="Plan" />
-                <NavLink href="/calendar" label="Calendar" />
+            <div className="hidden lg:flex items-center space-x-8">
+              
+              {/* Core Trading Group */}
+              <div className="flex items-center space-x-1">
+                <NavLink href="/" label="Dashboard" icon="🏠" />
+                <NavLink href="/trades" label="Trades" icon="📊" />
+                <NavLink href="/analytics" label="Analytics" icon="📈" />
+              </div>
+
+              {/* AI & Intelligence Group */}
+              <div className="flex items-center space-x-1 border-l border-gray-200 pl-6">
+                <NavLink href="/ai-insights" label="AI Insights" icon="🧠" priority />
+              </div>
+
+              {/* Tools Group */}
+              <div className="flex items-center space-x-1 border-l border-gray-200 pl-6">
+                <DropdownMenu 
+                  label="Tools" 
+                  icon="🛠️"
+                  items={[
+                    { href: '/heatmaps', label: 'Heatmaps', icon: '🔥' },
+                    { href: '/calendar', label: 'Calendar', icon: '📅' },
+                    { href: '/risk-management', label: 'Risk Management', icon: '⚠️' },
+                    { href: '/trading-plan', label: 'Trading Plan', icon: '📋' }
+                  ]}
+                />
               </div>
             </div>
           )}
 
           {/* User Menu - Right */}
-          <div className="flex items-center flex-shrink-0">
+          <div className="flex items-center space-x-4 flex-shrink-0">
+            {/* Quick Actions */}
+            {shouldShowNavigation && (
+              <div className="hidden md:flex items-center space-x-2">
+                <Link 
+                  href="/trades" 
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+                >
+                  + Add Trade
+                </Link>
+              </div>
+            )}
             <UserMenu />
           </div>
 
@@ -96,10 +119,10 @@ function HeaderContent() {
             <div className="lg:hidden">
               <button
                 type="button"
-                className="mobile-menu-button p-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/40 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300"
+                className="mobile-menu-button p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
                 aria-label="Toggle mobile menu"
               >
-                <svg className="w-6 h-6 text-gray-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-6 h-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                   <path d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
               </button>
@@ -115,7 +138,7 @@ function HeaderContent() {
 }
 
 // Enhanced Navigation Link Component
-function NavLink({ href, label }: { href: string; label: string }) {
+function NavLink({ href, label, icon, priority = false }: { href: string; label: string; icon?: string; priority?: boolean }) {
   const pathname = usePathname();
   const isActive = pathname === href || (href !== '/' && pathname?.startsWith(href));
   
@@ -123,17 +146,51 @@ function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={`
-        px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative group
+        group flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative
         ${isActive 
-          ? 'text-white bg-gradient-to-r from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30' 
-          : 'text-gray-700 hover:text-indigo-600 hover:bg-white/80 hover:shadow-md'
+          ? priority 
+            ? 'text-white bg-gradient-to-r from-purple-600 to-blue-600 shadow-md' 
+            : 'text-blue-700 bg-blue-50 border border-blue-200'
+          : 'text-gray-700 hover:text-blue-700 hover:bg-gray-50'
         }
       `}
     >
-      <span className="relative z-10">{label}</span>
-      {!isActive && (
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      {icon && <span className="text-sm">{icon}</span>}
+      <span>{label}</span>
+      {priority && !isActive && (
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-purple-600/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
       )}
     </Link>
+  );
+}
+
+// Dropdown Menu Component for Tools
+function DropdownMenu({ label, icon, items }: { label: string; icon?: string; items: Array<{href: string; label: string; icon: string}> }) {
+  return (
+    <div className="relative group">
+      <button className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-700 hover:bg-gray-50 transition-all duration-200">
+        {icon && <span className="text-sm">{icon}</span>}
+        <span>{label}</span>
+        <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {/* Dropdown Menu */}
+      <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+        <div className="py-2">
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              href={item.href}
+              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+            >
+              <span className="text-sm">{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 } 
