@@ -12,9 +12,10 @@ export default function MobileMenu() {
     <div className="mobile-menu hidden lg:hidden">
       <div className="px-2 pt-2 pb-3 space-y-1 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl mt-2 mb-4">
         <MobileNavLink href="/" label="Dashboard" />
-        <MobileNavLink href="/trades" label="Trades" />
-        <MobileNavLink href="/analytics" label="Analytics" />
-        <MobileNavLink href="/heatmaps" label="Heatmaps" />
+              <MobileNavLink href="/trades" label="Trades" />
+      <MobileNavLink href="/analytics" label="Analytics" />
+      <MobileNavLink href="/ai-insights" label="AI Insights" />
+      <MobileNavLink href="/heatmaps" label="Heatmaps" />
         <MobileNavLink href="/risk-management" label="Risk Management" />
         <MobileNavLink href="/trading-plan" label="Trading Plan" />
         <MobileNavLink href="/calendar" label="Calendar" />

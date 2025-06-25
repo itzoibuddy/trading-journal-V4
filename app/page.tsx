@@ -556,6 +556,18 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a
+              href="/ai-insights"
+              className="group bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl p-4 hover:from-purple-600 hover:to-indigo-700 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold mb-1">AI Insights</h3>
+                  <p className="text-sm text-purple-100">Smart recommendations</p>
+                </div>
+                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">💡</span>
+              </div>
+            </a>
+            <a
               href="/trades"
               className="group bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl p-4 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
             >
@@ -569,26 +581,14 @@ export default function HomePage() {
             </a>
             <a
               href="/analytics"
-              className="group bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-xl p-4 hover:from-purple-600 hover:to-violet-700 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold mb-1">Analytics</h3>
-                  <p className="text-sm text-purple-100">Deep dive into data</p>
-                </div>
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">📊</span>
-              </div>
-            </a>
-            <a
-              href="/trading-plan"
               className="group bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl p-4 hover:from-green-600 hover:to-emerald-700 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-lg"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold mb-1">Trading Plan</h3>
-                  <p className="text-sm text-green-100">Strategy & rules</p>
+                  <h3 className="font-semibold mb-1">Analytics</h3>
+                  <p className="text-sm text-green-100">Deep dive into data</p>
                 </div>
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">🎯</span>
+                <span className="text-2xl group-hover:scale-110 transition-transform duration-200">📊</span>
               </div>
             </a>
           </div>

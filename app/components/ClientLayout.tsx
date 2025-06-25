@@ -34,7 +34,7 @@ function HeaderContent() {
   const isAuthenticated = status === 'authenticated';
   
   // Pages that clearly require authentication should show navigation
-  const authenticatedPages = ['/trades', '/analytics', '/heatmaps', '/risk-management', '/trading-plan', '/calendar'];
+  const authenticatedPages = ['/trades', '/analytics', '/ai-insights', '/heatmaps', '/risk-management', '/trading-plan', '/calendar'];
   const isOnAuthenticatedPage = authenticatedPages.some(page => pathname?.startsWith(page));
   
   // Show navigation if authenticated OR if on a page that requires authentication
@@ -77,6 +77,7 @@ function HeaderContent() {
                 <NavLink href="/" label="Dashboard" />
                 <NavLink href="/trades" label="Trades" />
                 <NavLink href="/analytics" label="Analytics" />
+                <NavLink href="/ai-insights" label="AI Insights" />
                 <NavLink href="/heatmaps" label="Heatmaps" />
                 <NavLink href="/risk-management" label="Risk" />
                 <NavLink href="/trading-plan" label="Plan" />

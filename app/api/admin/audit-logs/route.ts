@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 import { prisma } from '../../../lib/db'
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -20,29 +23,56 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Get audit logs
-    const logs = await prisma.auditLog.findMany({
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 500 // Limit to recent 500 logs
+    // Get query parameters
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const action = searchParams.get('action')
+    const userId = searchParams.get('userId')
+
+    // Build where clause
+    const where: {
+      action?: string;
+      userId?: string;
+    } = {}
+    if (action) where.action = action
+    if (userId) where.userId = userId
+
+    // Get audit logs with pagination
+    const [auditLogs, totalCount] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.auditLog.count({ where })
+    ])
+
+    // Get user details for audit logs
+    const userIds = [...new Set(auditLogs.map(log => log.userId).filter((id): id is string => id !== null))]
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true }
     })
 
-    // Manually fetch user data for logs that have userId
-    const logsWithUsers = await Promise.all(
-      logs.map(async (log) => {
-        if (log.userId) {
-          const user = await prisma.user.findUnique({
-            where: { id: log.userId },
-            select: { name: true, email: true }
-          })
-          return { ...log, user }
-        }
-        return log
-      })
-    )
+    const userMap = new Map(users.map(user => [user.id, user]))
 
-    return NextResponse.json({ logs: logsWithUsers })
+    // Enrich audit logs with user information
+    const enrichedLogs = auditLogs.map(log => ({
+      ...log,
+      user: log.userId ? userMap.get(log.userId) : null
+    }))
+
+    return NextResponse.json({
+      auditLogs: enrichedLogs,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    })
   } catch (error) {
     console.error('Admin audit logs error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
