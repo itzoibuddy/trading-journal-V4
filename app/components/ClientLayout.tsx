@@ -5,6 +5,7 @@ import UserMenu from "./UserMenu";
 import MobileMenu from "./MobileMenu";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 export default function ClientLayout({
   children,
@@ -32,6 +33,7 @@ function HeaderContent() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const isAuthenticated = status === 'authenticated';
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Pages that clearly require authentication should show navigation
   const authenticatedPages = ['/trades', '/analytics', '/heatmaps', '/risk-management', '/trading-plan', '/calendar', '/ai-insights'];
@@ -39,6 +41,11 @@ function HeaderContent() {
   
   // Show navigation if authenticated OR if on a page that requires authentication
   const shouldShowNavigation = isAuthenticated || status === 'loading' || isOnAuthenticatedPage;
+
+  // Close mobile menu when pathname changes (navigation occurs)
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   // Debug logging (only in development)
   if (process.env.NODE_ENV === 'development') {
@@ -49,6 +56,10 @@ function HeaderContent() {
     console.log('HeaderContent - Is on authenticated page:', isOnAuthenticatedPage);
     console.log('HeaderContent - Should show navigation:', shouldShowNavigation);
   }
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/30 shadow-lg shadow-blue-500/10">
@@ -99,13 +110,27 @@ function HeaderContent() {
             <div className="lg:hidden">
               <button
                 type="button"
+                onClick={toggleMobileMenu}
                 className="mobile-menu-button p-3 rounded-2xl bg-white/80 backdrop-blur-sm border border-white/40 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all duration-300"
                 aria-label="Toggle mobile menu"
-                aria-expanded="false"
+                aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-menu"
               >
-                <svg className="w-6 h-6 text-gray-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path d="M4 6h16M4 12h16M4 18h16"></path>
+                <svg 
+                  className={`w-6 h-6 text-gray-600 transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-45' : ''}`} 
+                  fill="none" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth="2" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor" 
+                  aria-hidden="true"
+                >
+                  {isMobileMenuOpen ? (
+                    <path d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                  )}
                 </svg>
               </button>
             </div>
@@ -114,8 +139,17 @@ function HeaderContent() {
 
         {/* Mobile Navigation Menu */}
         {shouldShowNavigation && (
-          <div id="mobile-menu" role="navigation" aria-label="Mobile navigation">
-            <MobileMenu />
+          <div 
+            id="mobile-menu" 
+            className={`lg:hidden transition-all duration-300 ease-in-out ${
+              isMobileMenuOpen 
+                ? 'max-h-screen opacity-100' 
+                : 'max-h-0 opacity-0 overflow-hidden'
+            }`}
+            role="navigation" 
+            aria-label="Mobile navigation"
+          >
+            <MobileMenu onNavigate={() => setIsMobileMenuOpen(false)} />
           </div>
         )}
       </nav>
