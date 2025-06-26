@@ -137,7 +137,7 @@ export default function AIInsights() {
     return (
       <div className="max-w-7xl mx-auto py-6 px-4 space-y-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">🤖 Advanced AI Trading Insights</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">🧠 Advanced AI Trading Insights</h1>
           <p className="text-gray-600">Sophisticated analytics powered by machine learning</p>
           <div className="mt-4 flex justify-center space-x-4">
             <span className={`px-3 py-1 rounded-full text-sm ${
@@ -379,7 +379,7 @@ export default function AIInsights() {
   return (
     <div className="max-w-7xl mx-auto py-6 px-4 space-y-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">🤖 AI Trading Insights</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">🧠 AI Trading Insights</h1>
         <p className="text-gray-600">Basic analytics (Complete 5+ trades for advanced insights)</p>
       </div>
 
