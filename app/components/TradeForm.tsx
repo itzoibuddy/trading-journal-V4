@@ -196,19 +196,61 @@ export default function TradeForm({ initialData, onSuccess, onCancel }: TradeFor
       console.log('Form data being submitted:', data);
       console.log('Initial data ID:', initialData?.id);
       
+      // Additional client-side validation
+      if (data.entryPrice <= 0) {
+        throw new Error('Entry price must be greater than 0');
+      }
+      
+      if (data.quantity <= 0) {
+        throw new Error('Quantity must be greater than 0');
+      }
+      
+      if (data.exitPrice && data.exitPrice <= 0) {
+        throw new Error('Exit price must be greater than 0 if provided');
+      }
+      
+      if (data.exitDate && data.entryDate && new Date(data.exitDate) < new Date(data.entryDate)) {
+        throw new Error('Exit date cannot be before entry date');
+      }
+      
       if (initialData?.id !== undefined) {
         console.log('Updating trade with ID:', initialData.id);
         await updateTrade(initialData.id, data);
         console.log('Update successful');
+        // Show success toast
+        const successEvent = new CustomEvent('showToast', {
+          detail: {
+            message: 'Trade updated successfully!',
+            type: 'success'
+          }
+        });
+        window.dispatchEvent(successEvent);
       } else {
         console.log('Creating new trade');
         await createTrade(data);
         console.log('Create successful');
+        // Show success toast
+        const successEvent = new CustomEvent('showToast', {
+          detail: {
+            message: 'Trade created successfully!',
+            type: 'success'
+          }
+        });
+        window.dispatchEvent(successEvent);
       }
       onSuccess();
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Error submitting form: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      // Show error message in a more user-friendly way
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      // Create and dispatch a custom event for error handling
+      const errorEvent = new CustomEvent('showToast', {
+        detail: {
+          message: `Failed to ${initialData?.id !== undefined ? 'update' : 'create'} trade: ${errorMessage}`,
+          type: 'error'
+        }
+      });
+      window.dispatchEvent(errorEvent);
     }
   };
 

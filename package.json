@@ -46,7 +46,7 @@
     "dompurify": "^3.2.6",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
-    "next": "14.0.4",
+    "next": "^14.2.30",
     "next-auth": "^4.24.5",
     "nodemailer": "^6.10.1",
     "papaparse": "^5.5.3",
