@@ -77,6 +77,7 @@ function HeaderContent() {
                 <NavLink href="/" label="Dashboard" />
                 <NavLink href="/trades" label="Trades" />
                 <NavLink href="/analytics" label="Analytics" />
+                <NavLink href="/evolution" label="Evolution" />
                 <NavLink href="/ai-insights" label="AI Insights" />
                 <NavLink href="/heatmaps" label="Heatmaps" />
                 <NavLink href="/risk-management" label="Risk" />

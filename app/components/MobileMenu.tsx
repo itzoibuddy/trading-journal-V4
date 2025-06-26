@@ -14,6 +14,7 @@ export default function MobileMenu() {
         <MobileNavLink href="/" label="Dashboard" />
         <MobileNavLink href="/trades" label="Trades" />
         <MobileNavLink href="/analytics" label="Analytics" />
+        <MobileNavLink href="/evolution" label="Evolution Tracker" />
         <MobileNavLink href="/heatmaps" label="Heatmaps" />
         <MobileNavLink href="/risk-management" label="Risk Management" />
         <MobileNavLink href="/trading-plan" label="Trading Plan" />
