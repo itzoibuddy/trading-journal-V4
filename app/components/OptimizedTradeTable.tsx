@@ -332,7 +332,7 @@ export default function OptimizedTradeTable({ trades, onEdit, onDelete, onViewDe
 
   // Memoized visible column headers
   const visibleColumnHeaders = useMemo(() => {
-    const headers = [];
+    const headers: { key: string; label: string }[] = [];
     if (visibleColumns.entryDate) headers.push({ key: 'entryDate', label: 'Entry Date' });
     if (visibleColumns.symbol) headers.push({ key: 'symbol', label: 'Symbol' });
     if (visibleColumns.type) headers.push({ key: 'type', label: 'Type' });
