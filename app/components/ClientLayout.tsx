@@ -34,7 +34,7 @@ function HeaderContent() {
   const isAuthenticated = status === 'authenticated';
   
   // Pages that clearly require authentication should show navigation
-  const authenticatedPages = ['/trades', '/analytics', '/heatmaps', '/risk-management', '/trading-plan', '/calendar'];
+  const authenticatedPages = ['/trades', '/analytics', '/heatmaps', '/risk-management', '/trading-plan', '/calendar', '/ai-insights'];
   const isOnAuthenticatedPage = authenticatedPages.some(page => pathname?.startsWith(page));
   
   // Show navigation if authenticated OR if on a page that requires authentication
@@ -72,11 +72,12 @@ function HeaderContent() {
 
           {/* Desktop Navigation - Center */}
           {shouldShowNavigation && (
-            <div className="hidden lg:flex items-center justify-center flex-1 max-w-3xl mx-8">
+            <div className="hidden lg:flex items-center justify-center flex-1 max-w-4xl mx-8">
               <div className="flex items-center space-x-1 bg-white/60 backdrop-blur-sm rounded-2xl p-1 border border-white/40 shadow-inner">
                 <NavLink href="/" label="Dashboard" />
                 <NavLink href="/trades" label="Trades" />
                 <NavLink href="/analytics" label="Analytics" />
+                <NavLink href="/ai-insights" label="AI Insights" />
                 <NavLink href="/heatmaps" label="Heatmaps" />
                 <NavLink href="/risk-management" label="Risk" />
                 <NavLink href="/trading-plan" label="Plan" />
@@ -122,7 +123,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={`
-        px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative group
+        px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative group
         ${isActive 
           ? 'text-white bg-gradient-to-r from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30' 
           : 'text-gray-700 hover:text-indigo-600 hover:bg-white/80 hover:shadow-md'
