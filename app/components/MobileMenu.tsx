@@ -31,7 +31,7 @@ function MobileNavLink({ href, label, isActive }: { href: string; label: string;
   return (
     <Link
       href={href}
-      className={`block px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+      className={`block px-4 py-3 rounded-xl font-medium transition-all duration-300 whitespace-nowrap ${
         isActive
           ? 'text-white bg-gradient-to-r from-indigo-500 to-blue-600 shadow-lg'
           : 'text-gray-700 hover:text-indigo-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-blue-50 border border-transparent hover:border-indigo-200 hover:shadow-md'

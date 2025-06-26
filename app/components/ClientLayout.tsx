@@ -132,7 +132,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={`
-        px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative group
+        px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 relative group whitespace-nowrap
         ${isActive 
           ? 'text-white bg-gradient-to-r from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30' 
           : 'text-gray-700 hover:text-indigo-600 hover:bg-white/80 hover:shadow-md'
