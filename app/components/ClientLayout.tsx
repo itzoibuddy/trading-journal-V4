@@ -138,14 +138,10 @@ function HeaderContent() {
         </div>
 
         {/* Mobile Navigation Menu */}
-        {shouldShowNavigation && (
+        {shouldShowNavigation && isMobileMenuOpen && (
           <div 
             id="mobile-menu" 
-            className={`lg:hidden transition-all duration-300 ease-in-out ${
-              isMobileMenuOpen 
-                ? 'max-h-screen opacity-100' 
-                : 'max-h-0 opacity-0 overflow-hidden'
-            }`}
+            className="lg:hidden transition-all duration-300 ease-in-out"
             role="navigation" 
             aria-label="Mobile navigation"
           >
