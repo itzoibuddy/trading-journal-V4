@@ -392,7 +392,7 @@ export default function TradeTable({ trades, onEdit, onDelete, onViewDetails, is
               )}
               
               <span className="ml-4 text-sm text-gray-500">
-                Showing {indexOfFirstTrade + 1}-{Math.min(indexOfLastTrade, trades.length)} of {trades.length} trades
+                Showing {paginationData.indexOfFirstTrade + 1}-{Math.min(paginationData.indexOfFirstTrade + tradesPerPage, trades.length)} of {trades.length} trades
               </span>
             </div>
             
