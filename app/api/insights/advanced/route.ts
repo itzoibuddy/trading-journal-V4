@@ -4,6 +4,8 @@ import { authOptions } from '../../auth/[...nextauth]/route';
 import { prisma } from '../../../lib/db';
 import { AdvancedAIAnalytics, generateMarketSentiment } from '../../../lib/advanced-ai-analytics';
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

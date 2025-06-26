@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { prisma } from '../../lib/db';
 
+export const dynamic = 'force-dynamic'
+
 interface SkillMetrics {
   technical: number;
   risk: number;
