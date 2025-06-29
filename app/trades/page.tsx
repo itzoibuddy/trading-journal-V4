@@ -3,12 +3,16 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from 'react';
+import loadable from 'next/dynamic';
 import { getTrades, createTrade, updateTrade, deleteTrade, TradeFormData } from '../actions/trade';
 import { Trade } from '../types/Trade';
-import TradeForm from '../components/TradeForm';
-import TradeTable from '../components/TradeTable';
-import CSVImport from '../components/CSVImport';
-import TradeSummary from '../components/TradeSummary';
+
+// Dynamically import heavy, client-only components to keep initial JS chunk small
+const TradeForm = loadable(() => import('../components/TradeForm'), { ssr: false });
+const TradeTable = loadable(() => import('../components/TradeTable'), { ssr: false });
+const EnhancedCSVImport = loadable(() => import('../components/EnhancedCSVImport'), { ssr: false });
+const TradeSummary = loadable(() => import('../components/TradeSummary'), { ssr: false });
+const VirtualizedTradeTable = loadable(() => import('../components/VirtualizedTradeTable'), { ssr: false });
 
 // Helper function to safely convert to ISO string
 function safeToISOString(date: any): string {
@@ -361,7 +365,7 @@ export default function TradesPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
-                <CSVImport onImport={handleImportTrades} />
+                <EnhancedCSVImport onImport={handleImportTrades} />
                 
                 <button
                   onClick={() => setShowAddForm(true)}
@@ -376,8 +380,6 @@ export default function TradesPage() {
             </div>
           </div>
         </div>
-
-
 
         {/* Alert Messages */}
         {importMessage && (
@@ -604,13 +606,23 @@ export default function TradesPage() {
               </div>
             </div>
           ) : (
-            <TradeTable 
-              trades={getFilteredAndSortedTrades()}
-              onEdit={handleEditTrade}
-              onDelete={handleDeleteTrade}
-              onViewDetails={handleViewTradeDetails}
-              isDeleting={isDeleting}
-            />
+            getFilteredAndSortedTrades().length > 300 ? (
+              <VirtualizedTradeTable
+                trades={getFilteredAndSortedTrades()}
+                onEdit={handleEditTrade}
+                onDelete={handleDeleteTrade}
+                onViewDetails={handleViewTradeDetails}
+                isDeleting={isDeleting}
+              />
+            ) : (
+              <TradeTable
+                trades={getFilteredAndSortedTrades()}
+                onEdit={handleEditTrade}
+                onDelete={handleDeleteTrade}
+                onViewDetails={handleViewTradeDetails}
+                isDeleting={isDeleting}
+              />
+            )
           )}
         </div>
         

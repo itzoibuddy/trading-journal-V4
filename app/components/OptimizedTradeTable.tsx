@@ -3,12 +3,22 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import Pagination from './Pagination';
 import { Trade } from '../types/Trade';
+import { getLotSize as getSymbolLotSize, parseNSEOptionsSymbol, isOptionsSymbol } from '../lib/symbolParser';
 
 // Memoized helper functions
 const getLotSize = (symbol: string): number => {
-  if (symbol === 'NIFTY') return 75;
-  if (symbol === 'SENSEX') return 20;
-  return 1;
+  if (!symbol) return 1;
+  
+  // If it's an options symbol, parse it to get the underlying
+  if (isOptionsSymbol(symbol)) {
+    const parsed = parseNSEOptionsSymbol(symbol);
+    if (parsed.isValid) {
+      return getSymbolLotSize(parsed.underlying);
+    }
+  }
+  
+  // For direct underlying symbols or other cases
+  return getSymbolLotSize(symbol);
 };
 
 const formatQuantityAsLots = (quantity: number, symbol: string): string => {
@@ -90,7 +100,7 @@ const TradeRow = memo(({ trade, globalIndex, visibleColumns, onEdit, onDelete, o
           {trade.symbol}
           {trade.instrumentType === 'OPTIONS' && (
             <span className="ml-1 text-xs text-gray-500">
-              {trade.optionType} {trade.strikePrice && `@ ₹${trade.strikePrice.toLocaleString('en-IN')}`}
+              {trade.optionType} {trade.strikePrice && `@ ₹${trade.strikePrice.toLocaleString('en-US')}`}
             </span>
           )}
         </td>
