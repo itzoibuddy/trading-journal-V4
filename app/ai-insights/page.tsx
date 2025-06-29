@@ -29,6 +29,42 @@ interface AdvancedInsightData {
   };
 }
 
+// Simple replica of server getPerformanceGrade logic (keep in sync)
+function computePerformanceScore(data: any): number {
+  const weights = {
+    sharpeRatio: 0.25,
+    profitFactor: 0.20,
+    consistency: 0.20,
+    maxDrawdown: 0.15,
+    winLossRatio: 0.10,
+    disciplineScore: 0.08,
+    overtradingRisk: 0.06,
+    revengeTradingRisk: 0.06,
+  };
+  const p = data.performanceAnalysis;
+  const b = data.behavioralAnalysis;
+  const sharpeScore = Math.min(100, Math.max(0, (p.sharpeRatio + 2) * 25));
+  const profitScore = Math.min(100, Math.max(0, (p.profitFactor - 0.5) * 50));
+  const consistencyScore = p.consistency;
+  const drawdownScore = Math.max(0, 100 - p.maxDrawdown * 2);
+  const winLossScore = Math.min(100, p.winLossRatio * 50);
+  const disciplineScore = b.disciplineScore;
+  const overtradingScore = 100 - (b.overtradingRisk || 0);
+  const revengeScore = 100 - (b.revengeTradingRisk || 0);
+
+  const overall =
+    sharpeScore * weights.sharpeRatio +
+    profitScore * weights.profitFactor +
+    consistencyScore * weights.consistency +
+    drawdownScore * weights.maxDrawdown +
+    winLossScore * weights.winLossRatio +
+    disciplineScore * weights.disciplineScore +
+    overtradingScore * weights.overtradingRisk +
+    revengeScore * weights.revengeTradingRisk;
+
+  return Math.round(overall);
+}
+
 export default function AIInsights() {
   const { data: session, status } = useSession();
   const [insights, setInsights] = useState<AdvancedInsightData | null>(null);
