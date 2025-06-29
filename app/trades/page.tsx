@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import loadable from 'next/dynamic';
 import { getTrades, createTrade, updateTrade, deleteTrade, TradeFormData } from '../actions/trade';
 import { Trade } from '../types/Trade';
@@ -29,22 +29,25 @@ function formatCurrency(value: number | null | undefined): string {
 
 // Improved helper function with debug logging
 function convertDatesToISOString(obj: any) {
-  console.log('Converting dates for object:', JSON.stringify(obj, (key, value) => {
-    // Custom serializer to identify Date objects
-    if (typeof value === 'object' && value !== null && 'toISOString' in value) {
-      return `[Date: ${value.toISOString()}]`;
-    }
-    return value;
-  }, 2));
-  
   const result = { ...obj };
   ['entryDate', 'exitDate', 'expiryDate'].forEach((key) => {
     if (result[key]) {
       result[key] = safeToISOString(result[key]);
     }
   });
-  
-  console.log('Converted result:', JSON.stringify(result, null, 2));
+
+  // Avoid expensive logging in production; minimal logging in dev
+  if (process.env.NODE_ENV !== 'production') {
+    if (typeof window !== 'undefined') {
+      const win = window as any;
+      win.__convertLogCount = (win.__convertLogCount || 0) + 1;
+      if (win.__convertLogCount <= 3) {
+        // eslint-disable-next-line no-console
+        console.debug('[convertDatesToISOString] processed object', result);
+      }
+    }
+  }
+
   return result;
 }
 
@@ -237,13 +240,12 @@ export default function TradesPage() {
     }
   };
 
-  // Filter and sort trades based on current filters
-  const getFilteredAndSortedTrades = () => {
-    let filteredTrades = trades;
+  // Filter and sort trades (memoized)
+  const filteredTrades = useMemo(() => {
+    let filtered = trades;
 
-    // Apply search filter
     if (searchQuery.trim()) {
-      filteredTrades = filteredTrades.filter(trade =>
+      filtered = filtered.filter(trade =>
         trade.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (trade.strategy && trade.strategy.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (trade.notes && trade.notes.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -253,32 +255,32 @@ export default function TradesPage() {
     // Apply type filter
     switch (filterType) {
       case 'LONG':
-        filteredTrades = filteredTrades.filter(trade => trade.type === 'LONG');
+        filtered = filtered.filter(trade => trade.type === 'LONG');
         break;
       case 'SHORT':
-        filteredTrades = filteredTrades.filter(trade => trade.type === 'SHORT');
+        filtered = filtered.filter(trade => trade.type === 'SHORT');
         break;
       case 'OPEN':
-        filteredTrades = filteredTrades.filter(trade => !trade.exitPrice);
+        filtered = filtered.filter(trade => !trade.exitPrice);
         break;
       case 'CLOSED':
-        filteredTrades = filteredTrades.filter(trade => trade.exitPrice);
+        filtered = filtered.filter(trade => trade.exitPrice);
         break;
       case 'WINNING':
-        filteredTrades = filteredTrades.filter(trade => trade.profitLoss && trade.profitLoss > 0);
+        filtered = filtered.filter(trade => trade.profitLoss && trade.profitLoss > 0);
         break;
       case 'LOSING':
-        filteredTrades = filteredTrades.filter(trade => trade.profitLoss && trade.profitLoss < 0);
+        filtered = filtered.filter(trade => trade.profitLoss && trade.profitLoss < 0);
         break;
     }
 
     // Apply sorting
     switch (sortBy) {
       case 'symbol':
-        filteredTrades.sort((a, b) => a.symbol.localeCompare(b.symbol));
+        filtered.sort((a, b) => a.symbol.localeCompare(b.symbol));
         break;
       case 'pnl':
-        filteredTrades.sort((a, b) => {
+        filtered.sort((a, b) => {
           const aPnL = a.profitLoss || 0;
           const bPnL = b.profitLoss || 0;
           return bPnL - aPnL; // Descending order
@@ -286,7 +288,7 @@ export default function TradesPage() {
         break;
       case 'date':
       default:
-        filteredTrades.sort((a, b) => {
+        filtered.sort((a, b) => {
           const aDate = new Date(a.entryDate).getTime();
           const bDate = new Date(b.entryDate).getTime();
           return bDate - aDate; // Most recent first
@@ -294,8 +296,8 @@ export default function TradesPage() {
         break;
     }
 
-    return filteredTrades;
-  };
+    return filtered;
+  }, [trades, searchQuery, filterType, sortBy]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -554,7 +556,7 @@ export default function TradesPage() {
           
           {/* Results count */}
           <div className="mt-4 text-sm text-gray-600">
-            Showing {getFilteredAndSortedTrades().length} of {trades.length} trades
+            Showing {filteredTrades.length} of {trades.length} trades
           </div>
         </div>
 
@@ -567,7 +569,7 @@ export default function TradesPage() {
                 <p className="text-gray-600 font-medium">Loading your trades...</p>
               </div>
             </div>
-          ) : getFilteredAndSortedTrades().length === 0 ? (
+          ) : filteredTrades.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6">
               <div className="text-center">
                 <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -606,9 +608,9 @@ export default function TradesPage() {
               </div>
             </div>
           ) : (
-            getFilteredAndSortedTrades().length > 300 ? (
+            filteredTrades.length > 300 ? (
               <VirtualizedTradeTable
-                trades={getFilteredAndSortedTrades()}
+                trades={filteredTrades}
                 onEdit={handleEditTrade}
                 onDelete={handleDeleteTrade}
                 onViewDetails={handleViewTradeDetails}
@@ -616,7 +618,7 @@ export default function TradesPage() {
               />
             ) : (
               <TradeTable
-                trades={getFilteredAndSortedTrades()}
+                trades={filteredTrades}
                 onEdit={handleEditTrade}
                 onDelete={handleDeleteTrade}
                 onViewDetails={handleViewTradeDetails}
