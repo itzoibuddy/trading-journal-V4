@@ -169,7 +169,9 @@ function getPerformanceGrade(insights: any) {
     consistency: 0.20,
     maxDrawdown: 0.15,
     winLossRatio: 0.10,
-    disciplineScore: 0.10,
+    disciplineScore: 0.08,
+    overtradingRisk: 0.06,
+    revengeTradingRisk: 0.06,
   };
 
   const sharpeScore = Math.min(100, Math.max(0, (insights.performanceAnalysis.sharpeRatio + 2) * 25));
@@ -178,6 +180,8 @@ function getPerformanceGrade(insights: any) {
   const drawdownScore = Math.max(0, 100 - insights.performanceAnalysis.maxDrawdown * 2);
   const winLossScore = Math.min(100, insights.performanceAnalysis.winLossRatio * 50);
   const disciplineScore = insights.behavioralAnalysis.disciplineScore;
+  const overtradingScore = 100 - insights.behavioralAnalysis.overtradingRisk;
+  const revengeScore = 100 - insights.behavioralAnalysis.revengeTradingRisk;
 
   const overallScore = Math.round(
     sharpeScore * weights.sharpeRatio +
@@ -185,7 +189,9 @@ function getPerformanceGrade(insights: any) {
     consistencyScore * weights.consistency +
     drawdownScore * weights.maxDrawdown +
     winLossScore * weights.winLossRatio +
-    disciplineScore * weights.disciplineScore
+    disciplineScore * weights.disciplineScore +
+    overtradingScore * weights.overtradingRisk +
+    revengeScore * weights.revengeTradingRisk
   );
 
   if (overallScore >= 90) return { grade: 'A+', score: overallScore, description: 'Exceptional Performance' };
@@ -225,6 +231,24 @@ function getPriorityActions(insights: any) {
       action: 'Review exit strategy',
       reason: 'Low profit factor indicates losses are eating into profits',
       impact: 'Strategy Optimization'
+    });
+  }
+  
+  if (insights.behavioralAnalysis.overtradingRisk > 40) {
+    actions.push({
+      priority: 'High',
+      action: 'Reduce trade frequency',
+      reason: 'Overtrading detected — average trades per day is high',
+      impact: 'Behavioral Control'
+    });
+  }
+  
+  if (insights.behavioralAnalysis.revengeTradingRisk > 20) {
+    actions.push({
+      priority: 'High',
+      action: 'Avoid revenge trading',
+      reason: 'Taking larger positions immediately after a loss increases risk',
+      impact: 'Emotional Control'
     });
   }
   

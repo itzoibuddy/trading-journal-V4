@@ -15,6 +15,8 @@ export interface AdvancedInsights {
     overconfidenceScore: number;
     fearGreedIndex: number;
     disciplineScore: number;
+    overtradingRisk: number;
+    revengeTradingRisk: number;
     emotionalTrends: Array<{
       period: string;
       emotion: string;
@@ -189,10 +191,35 @@ export class AdvancedAIAnalytics {
     else if (avgRisk < 0.05) riskTolerance = 'Moderate';
     else riskTolerance = 'Aggressive';
     
+    // Over-trading detection: average trades per active day
+    const firstDate = new Date(this.trades[this.trades.length - 1].entryDate);
+    const lastDate = new Date(this.trades[0].entryDate);
+    const daysActive = Math.max(1, (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+    const tradesPerDay = this.trades.length / daysActive;
+    const overtradingRisk = Math.min(100, Math.max(0, (tradesPerDay - 5) * 20)); // >5 trades/day gradually maxes risk
+
+    // Revenge-trading detection: losing trade followed by larger position within 1h
+    let revengeCount = 0;
+    for (let i = 0; i < this.trades.length - 1; i++) {
+      const cur = this.trades[i];
+      const next = this.trades[i + 1];
+      if ((cur.profitLoss || 0) < 0) {
+        const curValue = cur.quantity * cur.entryPrice;
+        const nextValue = next.quantity * next.entryPrice;
+        const timeDiff = Math.abs(new Date(next.entryDate).getTime() - new Date(cur.exitDate!).getTime());
+        if (timeDiff < 60 * 60 * 1000 && nextValue > curValue * 1.2) {
+          revengeCount++;
+        }
+      }
+    }
+    const revengeTradingRisk = Math.min(100, (revengeCount / this.trades.length) * 500); // heuristic
+
     return {
       overconfidenceScore: Math.round(overconfidenceScore),
       fearGreedIndex: Math.round(fearGreedIndex),
       disciplineScore: Math.round(disciplineScore),
+      overtradingRisk: Math.round(overtradingRisk),
+      revengeTradingRisk: Math.round(revengeTradingRisk),
       emotionalTrends,
       riskTolerance,
     };
