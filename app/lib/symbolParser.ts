@@ -334,25 +334,6 @@ export function parseOptionsSymbol(symbol: string): ParsedOptionsSymbol {
     let strikePart = '';
     let expiryDate: Date | null = null;
 
-    // --- Format-A : YYMMDD (legacy) -------------------------------------------------
-    const legacyMatch = remaining.match(/^(\d{6})(\d+)$/);
-    if (legacyMatch) {
-      const expiryPart = legacyMatch[1];
-      strikePart = legacyMatch[2];
-
-      const year = 2000 + parseInt(expiryPart.substring(0, 2));
-      const month = parseInt(expiryPart.substring(2, 4)) - 1; // 0-indexed
-      const day = parseInt(expiryPart.substring(4, 6));
-
-      expiryDate = new Date(year, month, day);
-
-      // quick validation
-      if (isNaN(expiryDate.getTime())) {
-        result.error = `Invalid expiry date: ${expiryPart}`;
-        return result;
-      }
-    }
-
     // --- Format-B : YYMMM (monthly, e.g. 25JUL) ------------------------------------
     if (!expiryDate) {
       const monthAbbrMatch = remaining.match(/^(\d{2})([A-Z]{3})(\d+)$/);
@@ -399,19 +380,43 @@ export function parseOptionsSymbol(symbol: string): ParsedOptionsSymbol {
         const year = 2000 + parseInt(yearPart);
         const monthIdx = monthDigit - 1; // 0-indexed
 
-        const expiryWeekdayMap: Record<string, number> = {
-          SENSEX: 5, // Friday
-          BANKEX: 5,
-          BANKNIFTY: 4, // Thursday
-          NIFTY: 4,
-          FINNIFTY: 4,
-          MIDCPNIFTY: 4,
-          NIFTYNXT50: 4
-        };
-        const weekday = expiryWeekdayMap[result.underlying] ?? 4;
+        if (monthIdx < 0 || monthIdx > 11 || weekNumber < 1 || weekNumber > 5) {
+          // Not a realistic weekly code – fall through to legacy
+        } else {
+          const expiryWeekdayMap: Record<string, number> = {
+            SENSEX: 5, // Friday
+            BANKEX: 5,
+            BANKNIFTY: 4, // Thursday
+            NIFTY: 4,
+            FINNIFTY: 4,
+            MIDCPNIFTY: 4,
+            NIFTYNXT50: 4
+          };
+          const weekday = expiryWeekdayMap[result.underlying] ?? 4;
 
-        const nthWeek = weekNumber; // 1,2,3...
-        expiryDate = getNthWeekdayOfMonth(year, monthIdx, weekday, nthWeek);
+          const nthWeek = weekNumber; // 1,2,3...
+          expiryDate = getNthWeekdayOfMonth(year, monthIdx, weekday, nthWeek);
+        }
+      }
+    }
+
+    // --- Format-A : YYMMDD (legacy) -------------------------------------------------
+    if (!expiryDate) {
+      const legacyMatch = remaining.match(/^(\d{6})(\d+)$/);
+      if (legacyMatch) {
+        const expiryPart = legacyMatch[1];
+        strikePart = legacyMatch[2];
+
+        const year = 2000 + parseInt(expiryPart.substring(0, 2));
+        const month = parseInt(expiryPart.substring(2, 4)); // 1-12 expected
+        const day = parseInt(expiryPart.substring(4, 6));
+
+        if (month < 1 || month > 12 || day < 1 || day > 31) {
+          result.error = `Invalid expiry date: ${expiryPart}`;
+          return result;
+        }
+
+        expiryDate = new Date(year, month - 1, day);
       }
     }
 
