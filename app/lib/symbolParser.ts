@@ -218,6 +218,25 @@ const UNDERLYING_SYMBOLS = [
  */
 const optionsSymbolCache: Record<string, ParsedOptionsSymbol> = {};
 
+// Helper: Return the date of the last occurrence of a weekday (0=Sun .. 6=Sat) in a given month
+function getLastWeekdayOfMonth(year: number, monthIdx: number, weekday: number): Date {
+  const lastDay = new Date(year, monthIdx + 1, 0); // last day of month
+  const offset = (lastDay.getDay() - weekday + 7) % 7;
+  return new Date(year, monthIdx, lastDay.getDate() - offset);
+}
+
+// Helper: Return the date of the nth occurrence of a weekday (1-5) in a month. If nth exceeds the available weeks, returns the last occurrence.
+function getNthWeekdayOfMonth(year: number, monthIdx: number, weekday: number, nth: number): Date {
+  const firstDay = new Date(year, monthIdx, 1);
+  const offset = (weekday - firstDay.getDay() + 7) % 7;
+  let day = 1 + offset + (nth - 1) * 7;
+  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+  if (day > daysInMonth) {
+    day -= 7; // fallback to the previous week if nth week doesn't exist
+  }
+  return new Date(year, monthIdx, day);
+}
+
 /**
  * Universal options symbol parser for NSE, BSE, and MCX
  * 
@@ -300,35 +319,114 @@ export function parseOptionsSymbol(symbol: string): ParsedOptionsSymbol {
     // Extract remaining part after underlying (date + strike)
     const remaining = symbolWithoutOption.substring(underlying.length);
 
-    // Must have at least 8 digits (YYMMDD + strike)
-    if (remaining.length < 8 || !/^\d+$/.test(remaining)) {
-      result.error = `Invalid format after underlying: ${remaining}. Expected digits only`;
+    /*
+     * Zerodha / Exchange symbol formats (observed June-2025)
+     * 1. YYMMDD  – legacy (e.g. BANKNIFTY26032678000CE)
+     * 2. YYMMM   – monthly, 3-letter month abbreviation (e.g. NIFTY25JUL26900CE)
+     * 3. YYMWW   – weekly, where M = 1-digit month, WW = 2-digit week (e.g. SENSEX2570185000CE → YY=25, M=7, WW=01)
+     */
+
+    const monthMap: Record<string, number> = {
+      JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
+      JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11
+    };
+
+    let strikePart = '';
+    let expiryDate: Date | null = null;
+
+    // --- Format-A : YYMMDD (legacy) -------------------------------------------------
+    const legacyMatch = remaining.match(/^(\d{6})(\d+)$/);
+    if (legacyMatch) {
+      const expiryPart = legacyMatch[1];
+      strikePart = legacyMatch[2];
+
+      const year = 2000 + parseInt(expiryPart.substring(0, 2));
+      const month = parseInt(expiryPart.substring(2, 4)) - 1; // 0-indexed
+      const day = parseInt(expiryPart.substring(4, 6));
+
+      expiryDate = new Date(year, month, day);
+
+      // quick validation
+      if (isNaN(expiryDate.getTime())) {
+        result.error = `Invalid expiry date: ${expiryPart}`;
+        return result;
+      }
+    }
+
+    // --- Format-B : YYMMM (monthly, e.g. 25JUL) ------------------------------------
+    if (!expiryDate) {
+      const monthAbbrMatch = remaining.match(/^(\d{2})([A-Z]{3})(\d+)$/);
+      if (monthAbbrMatch) {
+        const yearPart = monthAbbrMatch[1];
+        const monthAbbr = monthAbbrMatch[2];
+        strikePart = monthAbbrMatch[3];
+
+        const monthIdx = monthMap[monthAbbr as keyof typeof monthMap];
+        if (monthIdx === undefined) {
+          result.error = `Invalid month abbreviation: ${monthAbbr}`;
+          return result;
+        }
+
+        const year = 2000 + parseInt(yearPart);
+
+        // Use last Thursday (NSE) or Friday (BSE) of the month as approximation
+        const expiryWeekdayMap: Record<string, number> = {
+          SENSEX: 5,   // Friday
+          BANKEX: 5,
+          BANKNIFTY: 4, // Thursday
+          NIFTY: 4,
+          FINNIFTY: 4,
+          MIDCPNIFTY: 4,
+          NIFTYNXT50: 4
+        };
+
+        const weekday = expiryWeekdayMap[result.underlying] ?? 4; // default Thursday
+
+        expiryDate = getLastWeekdayOfMonth(year, monthIdx, weekday);
+      }
+    }
+
+    // --- Format-C : YYMWW (weekly, e.g. 25701) ------------------------------------
+    if (!expiryDate) {
+      const weeklyMatch = remaining.match(/^(\d{2})(\d)(\d{2})(\d+)$/); // YY M WW strike
+      if (weeklyMatch) {
+        const yearPart = weeklyMatch[1];
+        const monthDigit = parseInt(weeklyMatch[2]);
+        const weekPartStr = weeklyMatch[3];
+        const weekNumber = parseInt(weekPartStr);
+        strikePart = weeklyMatch[4];
+
+        const year = 2000 + parseInt(yearPart);
+        const monthIdx = monthDigit - 1; // 0-indexed
+
+        const expiryWeekdayMap: Record<string, number> = {
+          SENSEX: 5, // Friday
+          BANKEX: 5,
+          BANKNIFTY: 4, // Thursday
+          NIFTY: 4,
+          FINNIFTY: 4,
+          MIDCPNIFTY: 4,
+          NIFTYNXT50: 4
+        };
+        const weekday = expiryWeekdayMap[result.underlying] ?? 4;
+
+        const nthWeek = weekNumber; // 1,2,3...
+        expiryDate = getNthWeekdayOfMonth(year, monthIdx, weekday, nthWeek);
+      }
+    }
+
+    if (!expiryDate) {
+      result.error = `Unrecognized expiry/strike format: ${remaining}`;
       return result;
     }
 
-    // Extract expiry (first 6 digits)
-    const expiryPart = remaining.substring(0, 6);
-    
-    // Parse expiry date
-    const year = 2000 + parseInt(expiryPart.substring(0, 2));
-    const month = parseInt(expiryPart.substring(2, 4)) - 1; // Month is 0-indexed
-    const day = parseInt(expiryPart.substring(4, 6));
-
-    const expiryDate = new Date(year, month, day);
-    if (isNaN(expiryDate.getTime()) || month < 0 || month > 11 || day < 1 || day > 31) {
-      result.error = `Invalid expiry date: ${expiryPart}`;
-      return result;
-    }
-
-    result.expiry = expiryDate;
-
-    // Extract strike price (remaining digits after expiry)
-    const strikePart = remaining.substring(6);
+    // Validate strike part
     if (!strikePart || !/^\d+$/.test(strikePart)) {
       result.error = `Invalid strike price: ${strikePart}`;
       return result;
     }
 
+    result.expiry = expiryDate;
     result.strike = parseInt(strikePart);
 
     result.isValid = true;
